@@ -101,10 +101,11 @@ cnc-builder-api/
 - [ ] Testar compilação
 
 ### 2.3 Migrar gerador G-code V2
-- [ ] Copiar `lib/gcode-generator-v2.ts` e `lib/gcode-generator.ts`
+- [ ] Copiar `lib/gcode-generator-v2.ts`
+- [ ] Copiar funções auxiliares necessárias de `lib/gcode-generator.ts` (apenas `calcularTempoEstimado()` e `formatarTempo()`)
 - [ ] Ajustar imports
 - [ ] **CRÍTICO**: Remover `downloadGCode()` (depende de DOM)
-- [ ] Manter apenas: `gerarGCodeV2()`, `calcularTempoEstimado()`, `formatarTempo()`, `removerComentarios()`
+- [ ] Consolidar tudo em um único arquivo `gcode-generator-v2.ts` no backend
 
 ### 2.4 Migrar validações
 - [ ] Copiar `lib/validator.ts` e `lib/validation-rules.ts`
@@ -218,7 +219,9 @@ Criar `src/routes/gcode.routes.ts`:
 
 ### 4.1 Bateria de testes completa
 
-Criar suite de testes para validar:
+**Estratégia:** Testes manuais via curl/Postman (testes automatizados são melhorias futuras)
+
+Criar script `test/manual-tests.sh` para validar:
 1. Health check
 2. Request mínimo (só peças)
 3. Múltiplas peças
@@ -228,6 +231,11 @@ Criar suite de testes para validar:
 7. Validação de erro (sem peças)
 
 ### 4.2 Documentação da API
+
+Criar `README.md` com:
+- Instruções de setup e instalação
+- Comandos de desenvolvimento
+- Variáveis de ambiente
 
 Criar `API_DOCS.md` com:
 - Base URL
