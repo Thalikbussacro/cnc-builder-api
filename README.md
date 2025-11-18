@@ -70,6 +70,8 @@ npm start
 bash test/manual-tests.sh
 ```
 
+**Testing with Postman?** See the complete guide: [POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md)
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -91,6 +93,8 @@ POST /api/gcode/generate
 ```
 
 For detailed API documentation, see [API_DOCS.md](./API_DOCS.md).
+
+**Want to test with Postman?** See [POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md) for step-by-step instructions.
 
 ## Quick Example
 
