@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Import-Module BurntToast; New-BurntToastNotification -Text ''Documentação Criada'', ''Guia completo do Postman adicionado ao projeto''\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
