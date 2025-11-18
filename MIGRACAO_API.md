@@ -12,12 +12,13 @@
 | **Fase 2** - Migração da Lógica | ✅ Concluída | Compilação sem erros | `bee6ece` |
 | **Fase 3** - API REST | ✅ Concluída | Endpoints funcionais | `7ae67b2` |
 | **Fase 4** - Testes e Docs | ✅ Concluída | 7/7 testes passando | `0315ca2` |
-| **Fase 5** - Integração Frontend | ⏸️ Pendente | - | - |
+| **Fase 5** - Integração Frontend | ✅ Concluída | End-to-end testado | `5df91f8` |
 | **Fase 6** - Deploy Produção | ⏸️ Pendente | - | - |
 
 **Última atualização:** 18/11/2025
 
 **API Status:** ✅ Funcional e documentada (localhost:3001)
+**Frontend Status:** ✅ Integrado com API (branch: feature/api-integration)
 
 ---
 
@@ -282,38 +283,45 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 
 **Objetivo:** Conectar frontend Next.js à API e remover processamento client-side
 
-### 5.1 Criar cliente da API
+### 5.1 Criar cliente da API ✅
 
-Criar `lib/api-client.ts` no projeto **cnc-builder-web**
+- [x] Criar `lib/api-client.ts` no projeto **cnc-builder-web**
+- [x] Implementar método `gerarGCode()`
+- [x] Implementar método `healthCheck()`
+- [x] Usar variável de ambiente `NEXT_PUBLIC_API_URL`
 
-### 5.2 Migrar app/page.tsx para usar API
+### 5.2 Migrar app/page.tsx para usar API ✅
 
-Modificar handler de geração para chamar API:
-- Adicionar estados `carregando` e `erro`
-- Modificar `handleVisualizarGCode` para async
-- Adicionar loading state no botão
-- Adicionar mensagem de erro na UI
+- [x] Adicionar estados `carregando` e `erro`
+- [x] Modificar `handleVisualizarGCode` para async
+- [x] Modificar `handleContinueWithWarnings` para async
+- [x] Adicionar loading spinner no botão (Loader2)
+- [x] Adicionar mensagem de erro na UI (dismissible alert)
+- [x] Remover useEffect de geração client-side
 
-### 5.3 Remover lógica client-side (APÓS testar integração)
+### 5.3 Testes de integração ✅
 
-**IMPORTANTE:** Só fazer isso DEPOIS que API estiver 100% funcional!
+- [x] Servidor API rodando em localhost:3001
+- [x] Frontend rodando em localhost:3000
+- [x] Testar geração de G-code end-to-end no navegador
+- [x] Verificar loading state funcionando
+- [x] Verificar que G-code é gerado pela API
 
-- [ ] Remover `lib/gcode-generator.ts`
-- [ ] Remover `lib/gcode-generator-v2.ts`
-- [ ] Remover `lib/nesting-algorithm.ts`
-- [ ] Remover `lib/validator.ts` e `lib/validation-rules.ts`
-- [ ] Limpar imports não usados
-- [ ] Testar build: `npm run build`
+### 5.4 Remover lógica client-side (OPCIONAL - Manter para fallback)
 
-### 5.4 Testes de integração
+**NOTA:** Por enquanto mantendo arquivos client-side para compatibilidade e possível fallback.
+Pode ser removido em versão futura se necessário:
 
-- [ ] Servidor API rodando
-- [ ] Frontend rodando
-- [ ] Testar geração de G-code end-to-end
-- [ ] Verificar que não há erros no console
+- [ ] Remover `lib/gcode-generator.ts` (V1 - já não usado)
+- [ ] Remover `lib/gcode-generator-v2.ts` (mantido para referência)
+- [ ] Remover `lib/nesting-algorithm.ts` (usado no preview)
+- [ ] Remover `lib/validator.ts` e `lib/validation-rules.ts` (usado no frontend)
 
-### ✅ Checkpoint 5.1: Frontend integrado
-**Teste:** Conseguir gerar G-code pelo frontend usando a API
+### ✅ Checkpoint 5.1: Frontend integrado com API
+**Status:** ✅ CONCLUÍDO
+**Teste:** Geração de G-code pelo frontend usando API confirmada
+**Branch:** feature/api-integration
+**Commit:** 5df91f8
 
 ---
 
