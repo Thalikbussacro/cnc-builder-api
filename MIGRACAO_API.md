@@ -2,6 +2,25 @@
 
 **Objetivo:** Separar responsabilidades arquiteturais extraindo toda a lógica de geração de G-code para uma API REST independente usando Node.js + Express, mantendo o frontend Next.js como cliente puro.
 
+---
+
+## 📊 Status da Migração
+
+| Fase | Status | Checkpoint | Commit |
+|------|--------|------------|--------|
+| **Fase 1** - Configuração do Projeto | ✅ Concluída | `npm run dev` executa | `b04b004` |
+| **Fase 2** - Migração da Lógica | ✅ Concluída | Compilação sem erros | `bee6ece` |
+| **Fase 3** - API REST | ✅ Concluída | Endpoints funcionais | `7ae67b2` |
+| **Fase 4** - Testes e Docs | ✅ Concluída | 7/7 testes passando | `0315ca2` |
+| **Fase 5** - Integração Frontend | ⏸️ Pendente | - | - |
+| **Fase 6** - Deploy Produção | ⏸️ Pendente | - | - |
+
+**Última atualização:** 18/11/2025
+
+**API Status:** ✅ Funcional e documentada (localhost:3001)
+
+---
+
 ## Princípios da Migração
 
 - **SimplicityFirst**: Começar com endpoints mínimos, expandir conforme necessário
@@ -34,9 +53,9 @@ O projeto **cnc-builder-web** é atualmente 100% client-side:
 
 ### 1.1 Criar estrutura base do projeto API
 
-- [ ] Inicializar projeto Node.js
-- [ ] Configurar TypeScript
-- [ ] Instalar dependências base:
+- [x] Inicializar projeto Node.js
+- [x] Configurar TypeScript
+- [x] Instalar dependências base:
   ```bash
   npm install express cors
   npm install -D typescript @types/node @types/express @types/cors ts-node-dev
@@ -62,9 +81,9 @@ cnc-builder-api/
 └── .env.example
 ```
 
-- [ ] Criar estrutura de diretórios
-- [ ] Configurar `tsconfig.json` com strict mode
-- [ ] Criar `.gitignore` (node_modules, dist, .env)
+- [x] Criar estrutura de diretórios
+- [x] Configurar `tsconfig.json` com strict mode
+- [x] Criar `.gitignore` (node_modules, dist, .env)
 
 ### 1.3 Configurar scripts do package.json
 ```json
@@ -77,8 +96,8 @@ cnc-builder-api/
 }
 ```
 
-- [ ] Adicionar scripts
-- [ ] Testar `npm run dev` (deve falhar, ainda não temos server.ts)
+- [x] Adicionar scripts
+- [x] Testar `npm run dev` (deve falhar, ainda não temos server.ts)
 
 ### ✅ Checkpoint 1.1: Estrutura criada
 **Teste:** `npm run dev` executa (mesmo que dê erro de arquivo faltando)
@@ -90,27 +109,27 @@ cnc-builder-api/
 **Objetivo:** Copiar código existente e adaptá-lo para funcionar server-side
 
 ### 2.1 Copiar tipos TypeScript
-- [ ] Copiar `types/index.ts` do projeto web
-- [ ] Verificar compilação: `npm run build`
-- [ ] Ajustar imports se necessário (remover `@/` alias)
+- [x] Copiar `types/index.ts` do projeto web
+- [x] Verificar compilação: `npm run build`
+- [x] Ajustar imports se necessário (remover `@/` alias)
 
 ### 2.2 Migrar algoritmo de nesting
-- [ ] Copiar `lib/nesting-algorithm.ts`
-- [ ] Ajustar imports: trocar `@/types` por `../types`
-- [ ] **CRÍTICO**: Remover dependências de browser (se houver `window`, `document`, etc)
-- [ ] Testar compilação
+- [x] Copiar `lib/nesting-algorithm.ts`
+- [x] Ajustar imports: trocar `@/types` por `../types`
+- [x] **CRÍTICO**: Remover dependências de browser (se houver `window`, `document`, etc)
+- [x] Testar compilação
 
 ### 2.3 Migrar gerador G-code V2
-- [ ] Copiar `lib/gcode-generator-v2.ts`
-- [ ] Copiar funções auxiliares necessárias de `lib/gcode-generator.ts` (apenas `calcularTempoEstimado()` e `formatarTempo()`)
-- [ ] Ajustar imports
-- [ ] **CRÍTICO**: Remover `downloadGCode()` (depende de DOM)
-- [ ] Consolidar tudo em um único arquivo `gcode-generator-v2.ts` no backend
+- [x] Copiar `lib/gcode-generator-v2.ts`
+- [x] Copiar funções auxiliares necessárias de `lib/gcode-generator.ts` (apenas `calcularTempoEstimado()` e `formatarTempo()`)
+- [x] Ajustar imports
+- [x] **CRÍTICO**: Remover `downloadGCode()` (depende de DOM)
+- [x] Consolidar tudo em um único arquivo `gcode-generator-v2.ts` no backend
 
 ### 2.4 Migrar validações
-- [ ] Copiar `lib/validator.ts` e `lib/validation-rules.ts`
-- [ ] Ajustar imports
-- [ ] Testar compilação
+- [x] Copiar `lib/validator.ts` e `lib/validation-rules.ts`
+- [x] Ajustar imports
+- [x] Testar compilação
 
 ### 2.5 Criar sistema de defaults
 
@@ -201,12 +220,12 @@ Criar `src/routes/gcode.routes.ts`:
 ### 3.3 Testar endpoint localmente
 
 **Testes obrigatórios:**
-- [ ] `npm run dev` - servidor sobe sem erros
-- [ ] `curl http://localhost:3001/health` - retorna `{"status":"ok"}`
-- [ ] Teste mínimo - gera G-code com defaults
-- [ ] Teste completo - gera G-code com configs customizadas
-- [ ] Validar que G-code gerado está correto
-- [ ] Validar metadata (linhas, bytes, tempo, métricas)
+- [x] `npm run dev` - servidor sobe sem erros
+- [x] `curl http://localhost:3001/health` - retorna `{"status":"ok"}`
+- [x] Teste mínimo - gera G-code com defaults
+- [x] Teste completo - gera G-code com configs customizadas
+- [x] Validar que G-code gerado está correto
+- [x] Validar metadata (linhas, bytes, tempo, métricas)
 
 ### ✅ Checkpoint 3.1: API funcional
 **Teste:** Conseguir gerar G-code via curl/Postman com sucesso

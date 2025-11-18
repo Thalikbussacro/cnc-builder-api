@@ -72,9 +72,10 @@ You are a senior software engineer collaborating with a colleague. Prioritize co
 - **Runtime**: Node.js 18+
 - **Framework**: Express 4
 - **Language**: TypeScript 5
-- **Validation**: Zod (to be added)
-- **Security**: Helmet, CORS, express-rate-limit
+- **Validation**: Custom validators (validator.ts)
+- **Security**: CORS (Helmet and rate-limit for production)
 - **Development**: ts-node-dev
+- **Testing**: Manual tests via bash script
 
 ### Project Architecture
 This is a **REST API backend** for G-code generation:
@@ -84,9 +85,10 @@ This is a **REST API backend** for G-code generation:
 - **Default-driven**: Minimal required parameters, smart defaults
 
 ### Key Development Commands
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Compile TypeScript to JavaScript
+- `npm run dev` - Start development server with hot reload (port 3001)
+- `npm run build` - Compile TypeScript to JavaScript (output: dist/)
 - `npm run start` - Start production server (requires build first)
+- `bash test/manual-tests.sh` - Run manual test suite (7 tests)
 
 ### Core Functionality
 **What this API does:**
