@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "REST API for G-code generation with nesting algorithms",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
