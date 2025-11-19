@@ -194,3 +194,35 @@ Sempre que você fizer push para a branch `main`:
 - **Dashboard Render:** https://dashboard.render.com/
 - **Documentação Render:** https://render.com/docs
 - **Status do Serviço:** https://status.render.com/
+
+---
+
+## ⚠️ IMPORTANTE: Verificar Configuração Manual
+
+Se o deploy continuar falhando com o erro de `/opt/render/project/src/dist/server.js`, faça o seguinte:
+
+### Verificar Start Command no Dashboard
+
+1. Acesse: https://dashboard.render.com/
+2. Clique no seu serviço `cnc-builder-api`
+3. Vá na aba **Settings**
+4. Role até **Build & Deploy**
+5. Verifique se **Start Command** está como: `npm start`
+6. Se estiver como `node dist/server.js`, **MUDE PARA**: `npm start`
+7. Clique em **Save Changes**
+8. Faça **Manual Deploy** clicando em **Deploy latest commit**
+
+### Por Que Isso Acontece?
+
+O Render pode ter "cachado" a configuração antiga antes do `render.yaml` ser adicionado. O arquivo `render.yaml` só é lido na **primeira vez** que você cria o serviço.
+
+### Solução Alternativa: Recriar Serviço
+
+Se a mudança manual não funcionar:
+
+1. **Delete o serviço atual** no dashboard do Render
+2. **Crie um novo serviço** conectando novamente ao GitHub
+3. O Render vai ler o `render.yaml` automaticamente
+4. Deploy deve funcionar imediatamente
+
+---
