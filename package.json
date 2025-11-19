@@ -8,10 +8,8 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc && ls -la dist || true",
-    "start": "node start.js",
-    "test": "echo \"No tests yet - use manual testing via curl\"",
-    "postbuild": "echo 'Build complete. Files:' && ls -R dist || true"
+    "build": "tsc",
+    "start": "node start.js"
   },
   "repository": {
     "type": "git",
