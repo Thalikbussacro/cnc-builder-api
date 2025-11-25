@@ -225,11 +225,22 @@ router.post('/gcode/validate', (req, res) => {
       resultadoNesting.posicionadas
     );
 
-    // Retorna resultado da validação (sempre HTTP 200, mesmo com erros)
+    // Calcula tempo estimado para preview
+    const tempoEstimado = calcularTempoEstimado(
+      resultadoNesting.posicionadas,
+      configChapaFinal,
+      configCorteFinal
+    );
+
+    // Retorna resultado da validação com dados de preview (sempre HTTP 200, mesmo com erros)
     res.json({
       valid: validationResult.valid,
       errors: validationResult.errors,
-      warnings: validationResult.warnings
+      warnings: validationResult.warnings,
+      preview: {
+        tempoEstimado,
+        metricas: resultadoNesting.metricas
+      }
     });
 
   } catch (error: any) {
