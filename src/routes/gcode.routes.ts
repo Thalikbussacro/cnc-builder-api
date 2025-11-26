@@ -239,7 +239,9 @@ router.post('/gcode/validate', (req, res) => {
       warnings: validationResult.warnings,
       preview: {
         tempoEstimado,
-        metricas: resultadoNesting.metricas
+        metricas: resultadoNesting.metricas,
+        pecasPosicionadas: resultadoNesting.posicionadas,
+        pecasNaoCouberam: resultadoNesting.naoCouberam
       }
     });
 
