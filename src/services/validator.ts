@@ -96,6 +96,23 @@ export function validateConfigurations(
     });
   }
 
+  // Validação: Número de passadas × Profundidade por passada < Profundidade total
+  const numeroPassadas = Math.ceil(configCorte.profundidade / configCorte.profundidadePorPassada);
+  const profundidadeReal = numeroPassadas * configCorte.profundidadePorPassada;
+  const tolerancia = 0.01; // Tolerância de 0.01mm para erros de ponto flutuante
+
+  if (profundidadeReal < configCorte.profundidade - tolerancia) {
+    const profundidadeFaltante = configCorte.profundidade - profundidadeReal;
+    errors.push({
+      severity: 'error',
+      field: 'profundidadePorPassada',
+      message: `Configuração incompleta: ${numeroPassadas} passadas de ${configCorte.profundidadePorPassada}mm cortam apenas ${profundidadeReal}mm`,
+      suggestion: `Faltam ${profundidadeFaltante.toFixed(2)}mm para atingir a profundidade total de ${configCorte.profundidade}mm.\n\nSoluções:\n1) Aumentar profundidade/passada para ${Math.ceil(configCorte.profundidade / numeroPassadas * 100) / 100}mm\n2) Reduzir profundidade total para ${profundidadeReal}mm\n3) Ajustar número de passadas`,
+      currentValue: `${numeroPassadas} × ${configCorte.profundidadePorPassada}mm = ${profundidadeReal}mm (faltam ${profundidadeFaltante.toFixed(2)}mm)`,
+      recommendedValue: `Prof./passada: ${Math.ceil(configCorte.profundidade / numeroPassadas * 100) / 100}mm`,
+    });
+  }
+
   // Feedrate
   if (configCorte.feedrate <= 0) {
     errors.push({
