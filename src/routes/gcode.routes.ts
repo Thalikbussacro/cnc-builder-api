@@ -3,6 +3,7 @@ import { posicionarPecas, type MetodoNesting } from '../services/nesting-algorit
 import { gerarGCodeV2, calcularTempoEstimado } from '../services/gcode-generator-v2';
 import { mergeWithDefaults, DEFAULT_CONFIG_CHAPA, DEFAULT_CONFIG_CORTE, DEFAULT_CONFIG_FERRAMENTA } from '../utils/defaults';
 import { validateConfigurations } from '../services/validator';
+import { gcodeGenerationLimiter, validationLimiter } from '../middleware/rate-limit';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const router = Router();
  *   }
  * }
  */
-router.post('/gcode/generate', (req, res) => {
+router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
   try {
     const {
       pecas,
@@ -177,7 +178,7 @@ router.post('/gcode/generate', (req, res) => {
  *   warnings: ValidationIssue[]
  * }
  */
-router.post('/gcode/validate', (req, res) => {
+router.post('/gcode/validate', validationLimiter, (req, res) => {
   try {
     const {
       pecas,

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import gcodeRoutes from './routes/gcode.routes';
+import { apiLimiter } from './middleware/rate-limit';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -8,6 +9,9 @@ const PORT = process.env.PORT || 3001;
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Permite requests grandes
+
+// Rate limiting
+app.use('/api', apiLimiter);
 
 // Rotas
 app.use('/api', gcodeRoutes);
