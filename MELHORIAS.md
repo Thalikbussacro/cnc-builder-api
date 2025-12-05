@@ -14,12 +14,12 @@
 
 ### Status Geral
 - **Total:** 28 melhorias
-- **Concluídas:** 2/28 (7.14%)
+- **Concluídas:** 3/28 (10.71%)
 - **Em progresso:** 0/28 (0%)
-- **Pendentes:** 26/28 (92.86%)
+- **Pendentes:** 25/28 (89.29%)
 
 ### Por Categoria
-- [ ] **Segurança:** 2/6 (33.33%)
+- [ ] **Segurança:** 3/6 (50%)
 - [ ] **Performance:** 0/3
 - [ ] **Qualidade de Código:** 0/3
 - [ ] **Funcionalidades:** 0/3
@@ -222,7 +222,7 @@ curl -I http://localhost:3001/health
 ---
 
 ## 1.3. CORS Restritivo
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-05
 - **Prioridade:** 🟡 MÉDIA
 - **Tempo estimado:** 20 minutos
 - **Arquivos afetados:** `src/server.ts`, `.env.example`

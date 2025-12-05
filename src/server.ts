@@ -13,8 +13,29 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false, // Permitir embeds
 }));
 
-// Middlewares
-app.use(cors());
+// CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000',
+  'https://cnc-builder-web.vercel.app',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite requests sem origin (Postman, curl, etc)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS: Origem bloqueada - ${origin}`);
+      callback(new Error('Origem não permitida pelo CORS'), false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400, // 24 horas de cache para preflight
+}));
 app.use(express.json({ limit: '10mb' })); // Permite requests grandes
 
 // Rate limiting
