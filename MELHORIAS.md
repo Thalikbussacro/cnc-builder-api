@@ -14,12 +14,12 @@
 
 ### Status Geral
 - **Total:** 28 melhorias
-- **Concluídas:** 1/28 (3.57%)
+- **Concluídas:** 2/28 (7.14%)
 - **Em progresso:** 0/28 (0%)
-- **Pendentes:** 27/28 (96.43%)
+- **Pendentes:** 26/28 (92.86%)
 
 ### Por Categoria
-- [ ] **Segurança:** 1/6 (16.67%)
+- [ ] **Segurança:** 2/6 (33.33%)
 - [ ] **Performance:** 0/3
 - [ ] **Qualidade de Código:** 0/3
 - [ ] **Funcionalidades:** 0/3
@@ -164,7 +164,7 @@ done
 ---
 
 ## 1.2. Security Headers (Helmet)
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-05
 - **Prioridade:** 🔴 CRÍTICA
 - **Tempo estimado:** 15 minutos
 - **Arquivos afetados:** `src/server.ts`

@@ -1,10 +1,17 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import gcodeRoutes from './routes/gcode.routes';
 import { apiLimiter } from './middleware/rate-limit';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // API não precisa CSP
+  crossOriginEmbedderPolicy: false, // Permitir embeds
+}));
 
 // Middlewares
 app.use(cors());
