@@ -1,11 +1,35 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { posicionarPecas, type MetodoNesting } from '../services/nesting-algorithm';
 import { gerarGCodeV2, calcularTempoEstimado } from '../services/gcode-generator-v2';
 import { mergeWithDefaults, DEFAULT_CONFIG_CHAPA, DEFAULT_CONFIG_CORTE, DEFAULT_CONFIG_FERRAMENTA } from '../utils/defaults';
 import { validateConfigurations } from '../services/validator';
 import { gcodeGenerationLimiter, validationLimiter } from '../middleware/rate-limit';
+import { validationCache, getCacheKey, getCacheStats } from '../services/cache';
+import { BadRequestError, ValidationError } from '../middleware/error-handler';
+import { logger } from '../utils/logger';
+import { GenerateRequestSchema, ValidateRequestSchema } from '../schemas/gcode.schema';
 
 const router = Router();
+
+/**
+ * Middleware para adicionar timeout a requests
+ */
+function withTimeout(timeoutMs: number) {
+  return (req: any, res: any, next: any) => {
+    const timer = setTimeout(() => {
+      if (!res.headersSent) {
+        res.status(504).json({
+          error: 'Request timeout',
+          message: `Processamento excedeu ${timeoutMs / 1000} segundos`,
+        });
+      }
+    }, timeoutMs);
+
+    res.on('finish', () => clearTimeout(timer));
+    next();
+  };
+}
 
 /**
  * POST /api/gcode/generate
@@ -32,8 +56,11 @@ const router = Router();
  *   }
  * }
  */
-router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
+router.post('/gcode/generate', gcodeGenerationLimiter, withTimeout(30000), (req, res, next) => {
   try {
+    // Valida e parseia request com Zod
+    const validatedData = GenerateRequestSchema.parse(req.body);
+
     const {
       pecas,
       configChapa,
@@ -41,15 +68,7 @@ router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
       configFerramenta,
       metodoNesting = 'guillotine' as MetodoNesting,
       incluirComentarios = true
-    } = req.body;
-
-    // Validação básica
-    if (!pecas || !Array.isArray(pecas) || pecas.length === 0) {
-      res.status(400).json({
-        error: 'Parâmetro "pecas" é obrigatório e deve ser array não vazio',
-      });
-      return;
-    }
+    } = validatedData;
 
     // Mescla com defaults
     const configChapaFinal = mergeWithDefaults(configChapa || {}, DEFAULT_CONFIG_CHAPA);
@@ -81,31 +100,14 @@ router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
       resultadoNesting.posicionadas
     );
 
-    // Se houver erros de validação, retorna HTTP 400
+    // Se houver erros de validação, lança erro
     if (!validationResult.valid) {
-      res.status(400).json({
-        error: 'Configurações inválidas',
-        validation: {
-          valid: false,
-          errors: validationResult.errors,
-          warnings: validationResult.warnings
-        }
-      });
-      return;
+      throw new ValidationError('Configurações inválidas');
     }
 
     // Verifica se alguma peça não coube
     if (resultadoNesting.naoCouberam.length > 0) {
-      res.status(400).json({
-        error: 'Algumas peças não couberam na chapa',
-        naoCouberam: resultadoNesting.naoCouberam.map(p => ({
-          id: p.id,
-          nome: p.nome,
-          largura: p.largura,
-          altura: p.altura
-        }))
-      });
-      return;
+      throw new BadRequestError('Algumas peças não couberam na chapa');
     }
 
     // Gera G-code
@@ -148,12 +150,14 @@ router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
       }
     });
 
-  } catch (error: any) {
-    console.error('Erro ao gerar G-code:', error);
-    res.status(500).json({
-      error: 'Erro ao gerar G-code',
-      message: error.message
-    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        details: error.errors,
+      });
+    }
+    next(error);
   }
 });
 
@@ -178,23 +182,30 @@ router.post('/gcode/generate', gcodeGenerationLimiter, (req, res) => {
  *   warnings: ValidationIssue[]
  * }
  */
-router.post('/gcode/validate', validationLimiter, (req, res) => {
+router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res, next) => {
   try {
+    // Valida e parseia request com Zod
+    const validatedData = ValidateRequestSchema.parse(req.body);
+
     const {
       pecas,
       configChapa,
       configCorte,
       configFerramenta,
       metodoNesting = 'guillotine' as MetodoNesting,
-    } = req.body;
+    } = validatedData;
 
-    // Validação básica de pecas
-    if (!pecas || !Array.isArray(pecas) || pecas.length === 0) {
-      res.status(400).json({
-        error: 'Parâmetro "pecas" é obrigatório e deve ser array não vazio',
-      });
+    // Verificar cache
+    const cacheKey = getCacheKey({ pecas, configChapa, configCorte, configFerramenta, metodoNesting });
+    const cached = validationCache.get(cacheKey);
+
+    if (cached) {
+      logger.info('✅ Cache HIT', { endpoint: '/validate' });
+      res.json(cached);
       return;
     }
+
+    logger.info('❌ Cache MISS', { endpoint: '/validate' });
 
     // Mescla com defaults
     const configChapaFinal = mergeWithDefaults(configChapa || {}, DEFAULT_CONFIG_CHAPA);
@@ -234,7 +245,7 @@ router.post('/gcode/validate', validationLimiter, (req, res) => {
     );
 
     // Retorna resultado da validação com dados de preview (sempre HTTP 200, mesmo com erros)
-    res.json({
+    const result = {
       valid: validationResult.valid,
       errors: validationResult.errors,
       warnings: validationResult.warnings,
@@ -244,15 +255,31 @@ router.post('/gcode/validate', validationLimiter, (req, res) => {
         pecasPosicionadas: resultadoNesting.posicionadas,
         pecasNaoCouberam: resultadoNesting.naoCouberam
       }
-    });
+    };
 
-  } catch (error: any) {
-    console.error('Erro ao validar configurações:', error);
-    res.status(500).json({
-      error: 'Erro ao validar configurações',
-      message: error.message
-    });
+    // Salvar no cache
+    validationCache.set(cacheKey, result);
+
+    res.json(result);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        details: error.errors,
+      });
+    }
+    next(error);
   }
+});
+
+/**
+ * GET /api/cache/stats
+ *
+ * Retorna estatísticas do cache de validação
+ */
+router.get('/cache/stats', (_req, res) => {
+  res.json(getCacheStats());
 });
 
 export default router;

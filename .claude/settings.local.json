@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -Command \"Import-Module BurntToast; New-BurntToastNotification -Text ''Documentação Criada'', ''Guia completo do Postman adicionado ao projeto''\")"
+      "Bash(powershell -Command \"Import-Module BurntToast; New-BurntToastNotification -Text ''Documentação Criada'', ''Guia completo do Postman adicionado ao projeto''\")",
+      "Bash(if [ ! -f .env ])",
+      "Bash(then cp .env.example .env)",
+      "Bash(else echo \"Arquivo .env já existe\")",
+      "Bash(fi)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []
