@@ -1,78 +1,52 @@
 # CNC Builder API
 
-<div align="center">
+API REST para geração de código G-code com algoritmos inteligentes de nesting para máquinas CNC.
 
-**REST API for G-code generation with intelligent nesting algorithms for CNC machines**
+Este projeto fornece endpoints para otimização de layout de peças e geração automática de trajetórias de corte, incluindo validação de configurações, cache de resultados e monitoramento de performance.
 
-[![Tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)](https://github.com/Thalikbussacro/cnc-builder-api)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/Thalikbussacro/cnc-builder-api)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
+## Instalação
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [API](#-api-endpoints) • [Contributing](#-contributing)
+### Requisitos
 
-</div>
+- Node.js 18 ou superior
+- npm ou yarn
 
----
-
-## ✨ Features
-
-### Core Functionality
-- ✅ **3 Nesting Algorithms**: Greedy, Shelf, and Guillotine for optimal part placement
-- ✅ **Optimized G-code V2**: Efficient tool paths with ramp support and time estimation
-- ✅ **Smart Validation**: Pre-generation validation with detailed preview and warnings
-- ✅ **Intelligent Cache**: 5-minute TTL cache for validation results with hit rate tracking
-- ✅ **Request Tracing**: Unique Request ID for every request (UUID v4)
-
-### Security & Performance
-- ✅ **Rate Limiting**: Global (100 req/15min) + Per-endpoint (20 req/min)
-- ✅ **Security Headers**: Helmet.js with API-specific configuration
-- ✅ **CORS Protection**: Restrictive CORS with environment-based origins
-- ✅ **Input Sanitization**: Validator.js integration
-- ✅ **Request Timeouts**: 30s for generation, 10s for validation
-- ✅ **Response Compression**: Gzip compression for responses > 1KB
-
-### Monitoring & Observability
-- ✅ **Health Checks**: Basic `/health`, detailed `/health/detailed`, Kubernetes `/ready` and `/live`
-- ✅ **Cache Statistics**: Real-time cache hit/miss rates
-- ✅ **Structured Logging**: Winston with console + file transports
-- ✅ **Request ID Tracking**: Propagated across all logs and responses
-
-### Developer Experience
-- ✅ **OpenAPI/Swagger**: Interactive API documentation at `/api-docs`
-- ✅ **Full TypeScript**: 100% type safety with Zod runtime validation
-- ✅ **Comprehensive Tests**: 75 tests (unit + integration + E2E)
-- ✅ **Smart Defaults**: Minimal required parameters with sensible defaults
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Node.js**: 18 or higher
-- **npm** or **yarn**
-
-### Installation
+### Configuração
 
 ```bash
-# Clone the repository
+# Clonar o repositório
 git clone https://github.com/Thalikbussacro/cnc-builder-api.git
 cd cnc-builder-api
 
-# Install dependencies
+# Instalar dependências
 npm install
 
-# Configure environment (optional)
+# Configurar variáveis de ambiente (opcional)
 cp .env.example .env
 
-# Start development server
+# Iniciar servidor de desenvolvimento
 npm run dev
-
-# Server will start at http://localhost:3001
 ```
 
-### First Request
+O servidor estará disponível em `http://localhost:3001`.
+
+## Uso
+
+### Documentação da API
+
+A documentação completa da API está disponível via Swagger UI em:
+
+```
+http://localhost:3001/api-docs
+```
+
+A interface interativa inclui:
+- Schemas completos de requisição e resposta
+- Funcionalidade de teste direto dos endpoints
+- Informações de rate limiting
+- Exemplos de respostas de erro
+
+### Exemplo Básico
 
 ```bash
 curl -X POST http://localhost:3001/api/gcode/generate \
@@ -89,274 +63,136 @@ curl -X POST http://localhost:3001/api/gcode/generate \
   }'
 ```
 
----
+## Desenvolvimento
 
-## 📚 Documentation
+### Scripts Disponíveis
 
-### Interactive API Documentation
-Visit **[http://localhost:3001/api-docs](http://localhost:3001/api-docs)** for full interactive Swagger documentation with:
-- Complete request/response schemas
-- Try-it-out functionality
-- Rate limit information
-- Error response examples
+```bash
+# Desenvolvimento com hot reload
+npm run dev
 
-### Additional Documentation
-- **[POSTMAN_GUIDE.md](./POSTMAN_GUIDE.md)** - Step-by-step Postman testing guide
-- **[API_DOCS.md](./API_DOCS.md)** - Detailed API documentation
-- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+# Build de produção
+npm run build
 
----
+# Executar servidor em produção
+npm start
 
-## 🔌 API Endpoints
+# Executar testes
+npm test
 
-### G-code Generation
+# Testes com cobertura
+npm run test:coverage
 
-#### `POST /api/gcode/generate`
-Generate optimized G-code for CNC machining.
-
-**Rate Limit:** 20 requests/minute
-**Timeout:** 30 seconds
-
-```json
-{
-  "pecas": [
-    { "id": "1", "largura": 100, "altura": 200, "tipoCorte": "externo" }
-  ],
-  "metodoNesting": "guillotine",
-  "incluirComentarios": true
-}
+# Testes em modo watch
+npm run test:watch
 ```
 
-#### `POST /api/gcode/validate`
-Validate configuration and get preview without generating G-code.
-
-**Rate Limit:** 20 requests/minute
-**Timeout:** 10 seconds
-**Cache:** 5 minutes TTL
-
-```json
-{
-  "pecas": [
-    { "id": "1", "largura": 100, "altura": 200, "tipoCorte": "externo" }
-  ]
-}
-```
-
-### Monitoring
-
-#### `GET /health`
-Basic health check for load balancers.
-
-#### `GET /health/detailed`
-Detailed health with CPU, memory, and cache statistics.
-
-#### `GET /ready`
-Readiness probe for Kubernetes.
-
-#### `GET /live`
-Liveness probe for Kubernetes.
-
-### Cache
-
-#### `GET /api/cache/stats`
-Cache hit/miss statistics.
-
----
-
-## 🏗️ Project Structure
+### Estrutura do Projeto
 
 ```
 cnc-builder-api/
 ├── src/
-│   ├── __tests__/           # Test suites
-│   │   ├── unit/            # Unit tests
-│   │   ├── integration/     # Integration tests
-│   │   └── e2e/             # End-to-end tests
-│   ├── config/              # Configuration (env, swagger)
-│   ├── middleware/          # Express middlewares
-│   │   ├── error-handler.ts
-│   │   ├── rate-limit.ts
-│   │   ├── request-id.ts
-│   │   └── sanitize.ts
-│   ├── routes/              # API routes
-│   ├── schemas/             # Zod validation schemas
-│   ├── services/            # Business logic
-│   │   ├── cache.ts
-│   │   ├── gcode-generator-v2.ts
-│   │   ├── nesting-algorithm.ts
-│   │   └── validator.ts
-│   ├── types/               # TypeScript types
-│   ├── utils/               # Utilities
-│   │   ├── defaults.ts
-│   │   └── logger.ts
-│   └── server.ts            # Express server setup
-├── dist/                    # Compiled JavaScript (generated)
-├── .env.example             # Environment variables template
-└── package.json
+│   ├── __tests__/           # Suítes de testes (unit, integration, e2e)
+│   ├── config/              # Configurações (environment, swagger)
+│   ├── middleware/          # Middlewares Express (error-handler, rate-limit, sanitize)
+│   ├── routes/              # Definição de rotas da API
+│   ├── schemas/             # Schemas de validação Zod
+│   ├── services/            # Lógica de negócio (cache, nesting, G-code)
+│   ├── types/               # Definições de tipos TypeScript
+│   ├── utils/               # Utilitários (logger, defaults)
+│   └── server.ts            # Configuração do servidor Express
+├── dist/                    # JavaScript compilado (gerado)
+└── .env.example             # Template de variáveis de ambiente
 ```
 
----
+### Algoritmos de Nesting
 
-## 🧪 Testing
+O projeto implementa três algoritmos de otimização de layout:
 
-```bash
-# Run all tests (75 tests)
-npm test
+- **Greedy**: Algoritmo first-fit simples e rápido
+- **Shelf**: Empacotamento baseado em prateleiras horizontais
+- **Guillotine**: Cortes guilhotina recursivos (padrão, melhor eficiência)
 
-# Run tests with coverage
-npm run test:coverage
+### Testes
 
-# Run tests in watch mode
-npm run test:watch
-```
+A suíte de testes inclui:
+- 30 testes unitários (algoritmos de nesting, geração de G-code)
+- 32 testes de integração (endpoints da API, health checks)
+- 13 testes E2E (fluxos completos, caching, algoritmos)
 
-**Test Coverage:**
-- **Unit Tests**: 30 tests (nesting algorithms, G-code generation)
-- **Integration Tests**: 32 tests (API endpoints, health checks)
-- **E2E Tests**: 13 tests (complete workflows, caching, algorithms)
+Total: 75 testes com ~85% de cobertura.
 
----
+## Configuração
 
-## ⚙️ Configuration
+### Variáveis de Ambiente
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NODE_ENV` | `development` | Environment (`development`, `production`, `test`) |
-| `PORT` | `3001` | Server port |
-| `LOG_LEVEL` | `info` | Logging level (`error`, `warn`, `info`, `debug`) |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | CORS allowed origins (comma-separated) |
-
-### Nesting Algorithms
-
-- **Greedy**: Fast, simple first-fit algorithm
-- **Shelf**: Horizontal shelf-based packing
-- **Guillotine**: Recursive guillotine cuts (default, best efficiency)
+| Variável | Padrão | Descrição |
+|----------|--------|-----------|
+| `NODE_ENV` | `development` | Ambiente de execução |
+| `PORT` | `3001` | Porta do servidor |
+| `LOG_LEVEL` | `info` | Nível de logging (error, warn, info, debug) |
+| `ALLOWED_ORIGINS` | `http://localhost:3000` | Origens permitidas para CORS (separadas por vírgula) |
 
 ### Rate Limiting
 
-- **Global API**: 100 requests per 15 minutes
-- **G-code Generation**: 20 requests per minute
-- **Validation**: 20 requests per minute
+- API global: 100 requisições por 15 minutos
+- Geração de G-code: 20 requisições por minuto
+- Validação: 20 requisições por minuto
 
----
+### Cache
 
-## 🔧 Development
+- TTL: 5 minutos
+- Aplicado em endpoints de validação
+- Taxa média de hit: ~75%
 
-```bash
-# Start development server with hot reload
-npm run dev
+## Deploy
 
-# Compile TypeScript
-npm run build
-
-# Start production server
-npm start
-```
-
----
-
-## 📊 Performance
-
-- **Cache**: 5-minute TTL with ~75% hit rate on validation
-- **Compression**: Gzip for responses > 1KB
-- **Algorithm Speed**: < 2s for 500 parts
-- **Request Timeout**: 30s generation, 10s validation
-
----
-
-## 🔒 Security
-
-- **Helmet.js**: Security headers with API-specific configuration
-- **CORS**: Restrictive origin whitelist
-- **Input Sanitization**: All user input sanitized
-- **Request Size Limit**: 2MB maximum payload
-- **Array Validation**: Max 1000 items per array
-- **Timeout Protection**: Automatic timeout for long requests
-
----
-
-## 🚀 Deployment
-
-### Production Build
+### Build de Produção
 
 ```bash
 npm run build
 npm start
 ```
 
-### Environment Setup
+### Configuração de Ambiente
 
-1. Copy `.env.example` to `.env`
-2. Configure `ALLOWED_ORIGINS` for your domain
-3. Set `LOG_LEVEL=warn` for production
-4. Ensure `NODE_ENV=production`
+1. Copiar `.env.example` para `.env`
+2. Configurar `ALLOWED_ORIGINS` com os domínios permitidos
+3. Definir `LOG_LEVEL=warn` para produção
+4. Garantir `NODE_ENV=production`
 
 ### Health Checks
 
-Configure your load balancer/Kubernetes:
+Para configuração em load balancers ou Kubernetes:
+
 - **Liveness**: `GET /live`
 - **Readiness**: `GET /ready`
-- **Health**: `GET /health`
+- **Health**: `GET /health` (básico) ou `GET /health/detailed` (detalhado)
 
----
+### Monitoramento
 
-## 📈 Monitoring
+Todos os responses incluem headers de monitoramento:
 
-### Health Check Example
+- `X-Request-ID`: Identificador único da requisição (UUID v4)
+- `X-RateLimit-Limit`: Limite de requisições
+- `X-RateLimit-Remaining`: Requisições restantes
+- `X-RateLimit-Reset`: Timestamp de reset do limite
 
+Endpoint de estatísticas do cache:
 ```bash
-# Basic health
-curl http://localhost:3001/health
-
-# Detailed metrics
-curl http://localhost:3001/health/detailed
-
-# Cache statistics
 curl http://localhost:3001/api/cache/stats
 ```
 
-### Response Headers
+## Segurança
 
-Every response includes:
-- `X-Request-ID`: Unique request identifier (UUID v4)
-- `X-RateLimit-Limit`: Maximum requests allowed
-- `X-RateLimit-Remaining`: Remaining requests
-- `X-RateLimit-Reset`: Timestamp when limit resets
+- Headers de segurança via Helmet.js
+- CORS restritivo com whitelist de origens
+- Sanitização de inputs com Validator.js
+- Validação runtime com schemas Zod
+- Limite de tamanho de payload: 2MB
+- Limite de arrays: 1000 itens
+- Timeouts automáticos: 30s (geração), 10s (validação)
 
----
+## Licença
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
-
-### Development Flow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`npm test`)
-5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-6. Push to branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
----
-
-## 📝 License
-
-ISC - See [LICENSE](./LICENSE) for details
-
----
-
-## 🔗 Related Projects
-
-- **Frontend**: [cnc-builder-web](https://github.com/Thalikbussacro/cnc-builder-web) - Next.js UI for CNC Builder
-
----
-
-<div align="center">
-
-**Made with ❤️ for the CNC community**
-
-</div>
+ISC
