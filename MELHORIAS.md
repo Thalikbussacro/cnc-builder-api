@@ -14,13 +14,13 @@
 
 ### Status Geral
 - **Total:** 28 melhorias
-- **Concluídas:** 11/28 (39.29%)
+- **Concluídas:** 12/28 (42.86%)
 - **Em progresso:** 0/28 (0%)
-- **Pendentes:** 17/28 (60.71%)
+- **Pendentes:** 16/28 (57.14%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
-- [x] **Performance:** 2/3 (66.67%)
+- [x] **Performance:** 3/3 (100%) ✅
 - [x] **Qualidade de Código:** 3/3 (100%) ✅
 - [ ] **Funcionalidades:** 0/3
 - [ ] **Observabilidade:** 0/4
@@ -725,7 +725,7 @@ curl -X POST http://localhost:3001/api/gcode/generate \
 ---
 
 ## 2.3. Otimização de Algoritmos
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-05
 - **Prioridade:** 🟢 BAIXA
 - **Tempo estimado:** 2 horas
 - **Arquivos afetados:** `src/services/nesting-algorithm.ts`
@@ -792,8 +792,8 @@ console.log('Tempo:', Date.now() - inicio, 'ms');
 
 ### Critério de Conclusão
 - [x] Early exit implementado
-- [x] Limite de retângulos implementado
-- [x] 500 peças processadas em < 2s
+- [x] Limite de retângulos implementado (MAX_FREE_RECTS = 100)
+- [x] 500 peças processadas em < 2s (54ms medido)
 
 ---
 
