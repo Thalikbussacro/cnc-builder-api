@@ -55,16 +55,6 @@ You are a senior software engineer collaborating with a colleague. Prioritize co
 **ALWAYS consult these files before any implementation:**
 
 - `CLAUDE.md` - Development guidance and project context
-- `MIGRACAO_API.md` - API migration roadmap with phase-by-phase implementation plan
-
-**Mandatory Development Flow:**
-1. **Check Current Progress**: Review git history and MIGRACAO_API.md checkboxes
-2. **Continue from Next Phase**: Start with the next uncompleted phase
-3. **Implement**: Complete all tasks in the current phase
-4. **Test Functionality**: Run tests and verify everything works before committing
-5. **Commit Changes**: Create descriptive commit messages following conventional commits
-6. **Ask User**: "Phase X completed and tested. Ready to continue to Phase Y?"
-7. **Wait for Confirmation**: Get user approval before proceeding to next phase
 
 ## Project Context
 
