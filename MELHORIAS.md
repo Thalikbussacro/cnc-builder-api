@@ -14,9 +14,9 @@
 
 ### Status Geral
 - **Total:** 27 melhorias
-- **Concluídas:** 17/27 (62.96%)
+- **Concluídas:** 18/27 (66.67%)
 - **Em progresso:** 0/27 (0%)
-- **Pendentes:** 10/27 (37.04%)
+- **Pendentes:** 9/27 (33.33%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
@@ -26,7 +26,7 @@
 - [ ] **Observabilidade:** 2/4 (50%) - [Seção 5](#5-observabilidade)
 - [ ] **DevOps:** 1/2 (50%) - [Seção 6](#6-devops)
 - [ ] **Testes:** 2/3 (66.67%) - [Seção 7](#7-testes)
-- [ ] **Documentação:** 0/3 - [Seção 8](#8-documentação)
+- [ ] **Documentação:** 1/3 (33.33%) - [Seção 8](#8-documentação)
 
 ---
 
@@ -2819,10 +2819,10 @@ npm test -- e2e
 # 8. Documentação
 
 ## 8.1. OpenAPI/Swagger
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-06
 - **Prioridade:** 🟡 MÉDIA
 - **Tempo estimado:** 2 horas
-- **Arquivos afetados:** `src/docs/swagger.ts` (novo), `src/server.ts`
+- **Arquivos afetados:** `src/config/swagger.ts` (novo), `src/server.ts`, `src/routes/*.ts`
 
 ### Descrição
 Documentação interativa da API com Swagger/OpenAPI.
@@ -2953,11 +2953,21 @@ npm run dev
 ```
 
 ### Critério de Conclusão
-- [ ] Swagger instalado
-- [ ] Spec gerado
-- [ ] Endpoint `/api-docs` funciona
-- [ ] Todas rotas documentadas
-- [ ] Exemplos funcionais
+- [x] Swagger instalado (swagger-ui-express + swagger-jsdoc) ✅
+- [x] Spec OpenAPI 3.0 gerado com schemas reutilizáveis ✅
+- [x] Endpoint `/api-docs` funcionando com UI customizada ✅
+- [x] Endpoint `/api-docs.json` com spec JSON ✅
+- [x] Todas rotas documentadas (7 endpoints) ✅
+  - POST /api/gcode/generate
+  - POST /api/gcode/validate
+  - GET /api/cache/stats
+  - GET /health
+  - GET /health/detailed
+  - GET /ready
+  - GET /live
+- [x] Exemplos funcionais e schemas completos ✅
+- [x] Headers (X-Request-ID, X-RateLimit-*) documentados ✅
+- [x] Rate limits e timeouts documentados ✅
 
 ---
 

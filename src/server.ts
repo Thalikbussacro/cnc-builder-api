@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
 import { appConfig } from './config';
+import { swaggerSpec } from './config/swagger';
 import gcodeRoutes from './routes/gcode.routes';
 import healthRoutes from './routes/health.routes';
 import { apiLimiter } from './middleware/rate-limit';
@@ -60,6 +62,18 @@ app.use(sanitizeMiddleware); // Sanitiza inputs
 
 // Rate limiting
 app.use('/api', apiLimiter);
+
+// API Documentation (Swagger UI)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }', // Remove topbar
+  customSiteTitle: 'CNC Builder API Docs',
+}));
+
+// JSON spec endpoint
+app.get('/api-docs.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // Health routes (ANTES das rotas /api)
 app.use(healthRoutes);
