@@ -14,9 +14,9 @@
 
 ### Status Geral
 - **Total:** 27 melhorias
-- **Concluídas:** 15/27 (55.56%)
+- **Concluídas:** 16/27 (59.26%)
 - **Em progresso:** 0/27 (0%)
-- **Pendentes:** 12/27 (44.44%)
+- **Pendentes:** 11/27 (40.74%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
@@ -25,7 +25,7 @@
 - [ ] **Funcionalidades:** 0/3 - [Seção 4](#4-funcionalidades)
 - [ ] **Observabilidade:** 1/4 (25%) - [Seção 5](#5-observabilidade)
 - [ ] **DevOps:** 1/2 (50%) - [Seção 6](#6-devops)
-- [ ] **Testes:** 1/3 (33.33%) - [Seção 7](#7-testes)
+- [ ] **Testes:** 2/3 (66.67%) - [Seção 7](#7-testes)
 - [ ] **Documentação:** 0/3 - [Seção 8](#8-documentação)
 
 ---
@@ -2577,7 +2577,7 @@ npm run test:coverage
 ---
 
 ## 7.2. Testes de Integração
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-06
 - **Prioridade:** 🟡 MÉDIA
 - **Tempo estimado:** 2 horas
 - **Arquivos afetados:** `src/__tests__/integration/*.test.ts` (novos)
@@ -2696,11 +2696,11 @@ npm test -- integration
 ```
 
 ### Critério de Conclusão
-- [ ] Supertest configurado
-- [ ] Testes de endpoints escritos
-- [ ] Testes de validação funcionando
-- [ ] Testes de rate limiting funcionando
-- [ ] Todos testes passando
+- [x] Supertest configurado
+- [x] Testes de endpoints escritos
+- [x] Testes de validação funcionando
+- [x] Testes de rate limiting funcionando
+- [x] Todos testes passando (20 testes de integração + 30 unitários = 50 total)
 
 ---
 

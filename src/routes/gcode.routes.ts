@@ -16,7 +16,7 @@ const router = Router();
  * Middleware para adicionar timeout a requests
  */
 function withTimeout(timeoutMs: number) {
-  return (req: any, res: any, next: any) => {
+  return (_req: any, res: any, next: any) => {
     const timer = setTimeout(() => {
       if (!res.headersSent) {
         res.status(504).json({
@@ -130,7 +130,7 @@ router.post('/gcode/generate', gcodeGenerationLimiter, withTimeout(30000), (req,
     const linhas = gcode.split('\n').length;
     const tamanhoBytes = Buffer.byteLength(gcode, 'utf8');
 
-    res.json({
+    return res.json({
       gcode,
       metadata: {
         linhas,
@@ -154,10 +154,10 @@ router.post('/gcode/generate', gcodeGenerationLimiter, withTimeout(30000), (req,
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Dados inválidos',
-        details: error.errors,
+        details: error.issues,
       });
     }
-    next(error);
+    return next(error);
   }
 });
 
@@ -260,16 +260,16 @@ router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res,
     // Salvar no cache
     validationCache.set(cacheKey, result);
 
-    res.json(result);
+    return res.json(result);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Dados inválidos',
-        details: error.errors,
+        details: error.issues,
       });
     }
-    next(error);
+    return next(error);
   }
 });
 

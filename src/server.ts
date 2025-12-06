@@ -66,6 +66,12 @@ app.use('/api', gcodeRoutes);
 // Error handler global (sempre por último)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  logger.info('🚀 API rodando', { port: PORT, env: appConfig.nodeEnv });
-});
+// Exportar app para testes
+export default app;
+
+// Só iniciar servidor se não for teste
+if (appConfig.nodeEnv !== 'test') {
+  app.listen(PORT, () => {
+    logger.info('🚀 API rodando', { port: PORT, env: appConfig.nodeEnv });
+  });
+}
