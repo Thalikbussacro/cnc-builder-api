@@ -1,9 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
-/**
- * Classe de erro customizada
- */
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
@@ -12,23 +9,17 @@ export class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
-
-    // Mantém stack trace correto
     Object.setPrototypeOf(this, AppError.prototype);
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
-/**
- * Middleware de tratamento de erros global
- */
 export function errorHandler(
   err: Error | AppError,
   req: Request,
   res: Response,
   _next: NextFunction
 ) {
-  // Erro operacional (esperado)
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.message,
@@ -37,8 +28,7 @@ export function errorHandler(
     });
   }
 
-  // Erro não esperado
-  logger.error('❌ ERRO NÃO TRATADO', {
+  logger.error('Erro não tratado', {
     error: err.message,
     stack: err.stack,
     url: req.url,
@@ -53,9 +43,6 @@ export function errorHandler(
   });
 }
 
-/**
- * Erros comuns pré-definidos
- */
 export class BadRequestError extends AppError {
   constructor(message: string) {
     super(400, message);

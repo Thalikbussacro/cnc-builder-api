@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Schema de validação das variáveis de ambiente
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('3001').transform(Number).pipe(z.number().int().positive()),
@@ -8,10 +7,6 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
 });
 
-/**
- * Carrega e valida as variáveis de ambiente
- * Lança erro se alguma variável obrigatória estiver faltando ou inválida
- */
 function loadConfig() {
   try {
     const parsed = envSchema.parse(process.env);
@@ -27,7 +22,7 @@ function loadConfig() {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('❌ Erro de configuração:');
+      console.error('Erro de configuração:');
       console.error(error.issues);
       process.exit(1);
     }

@@ -23,7 +23,9 @@
       "Bash(npm run build:*)",
       "Bash(timeout /t 2 /nobreak)",
       "Bash(if exist nul del nul)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(del CONTRIBUTING.md API_DOCS.md MELHORIAS.md STATUS.md POSTMAN_GUIDE.md PROMPT_DESENVOLVIMENTO.md)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

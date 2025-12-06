@@ -337,12 +337,12 @@ router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res,
     const cached = validationCache.get(cacheKey);
 
     if (cached) {
-      logger.info('✅ Cache HIT', { endpoint: '/validate' });
+      logger.info('Cache HIT', { endpoint: '/validate' });
       res.json(cached);
       return;
     }
 
-    logger.info('❌ Cache MISS', { endpoint: '/validate' });
+    logger.info('Cache MISS', { endpoint: '/validate' });
 
     // Mescla com defaults
     const configChapaFinal = mergeWithDefaults(configChapa || {}, DEFAULT_CONFIG_CHAPA);
