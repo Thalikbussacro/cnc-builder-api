@@ -1,6 +1,9 @@
 import winston from 'winston';
 import { appConfig } from '../config';
 
+// Detecta se está rodando em ambiente serverless (Vercel, AWS Lambda, etc)
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
 export const logger = winston.createLogger({
   level: appConfig.logLevel,
   format: winston.format.combine(
@@ -19,7 +22,9 @@ export const logger = winston.createLogger({
         })
       ),
     }),
-    ...(appConfig.isProduction
+    // Em ambientes serverless, usa apenas Console (filesystem é read-only)
+    // Em ambientes tradicionais de produção, adiciona File transports
+    ...(appConfig.isProduction && !isServerless
       ? [
           new winston.transports.File({
             filename: 'logs/error.log',
