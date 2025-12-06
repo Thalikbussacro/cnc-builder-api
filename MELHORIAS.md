@@ -14,9 +14,9 @@
 
 ### Status Geral
 - **Total:** 27 melhorias
-- **Concluídas:** 14/27 (51.85%)
+- **Concluídas:** 15/27 (55.56%)
 - **Em progresso:** 0/27 (0%)
-- **Pendentes:** 13/27 (48.15%)
+- **Pendentes:** 12/27 (44.44%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
@@ -24,7 +24,7 @@
 - [x] **Qualidade de Código:** 3/3 (100%) ✅
 - [ ] **Funcionalidades:** 0/3 - [Seção 4](#4-funcionalidades)
 - [ ] **Observabilidade:** 1/4 (25%) - [Seção 5](#5-observabilidade)
-- [ ] **DevOps:** 0/2 - [Seção 6](#6-devops)
+- [ ] **DevOps:** 1/2 (50%) - [Seção 6](#6-devops)
 - [ ] **Testes:** 1/3 (33.33%) - [Seção 7](#7-testes)
 - [ ] **Documentação:** 0/3 - [Seção 8](#8-documentação)
 
@@ -2278,7 +2278,7 @@ git push origin main
 ---
 
 ## 6.2. Environment Configs
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-06
 - **Prioridade:** 🟡 MÉDIA
 - **Tempo estimado:** 45 minutos
 - **Arquivos afetados:** `src/config/index.ts` (novo), `.env.example`, `src/server.ts`
@@ -2403,11 +2403,11 @@ npm start
 ```
 
 ### Critério de Conclusão
-- [ ] Config centralizado criado
-- [ ] Validação com Zod funciona
-- [ ] Erros de config impedem inicialização
-- [ ] `.env.example` atualizado
-- [ ] Todos arquivos usam `appConfig`
+- [x] Config centralizado criado
+- [x] Validação com Zod funciona
+- [x] Erros de config impedem inicialização
+- [x] `.env.example` atualizado
+- [x] Todos arquivos usam `appConfig`
 
 ---
 
