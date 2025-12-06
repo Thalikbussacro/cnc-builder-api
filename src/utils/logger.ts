@@ -42,3 +42,16 @@ export const stream = {
     logger.info(message.trim());
   },
 };
+
+/**
+ * Cria um logger "filho" com request ID incluído nos metadados
+ * Útil para rastrear todos os logs relacionados a um request específico
+ *
+ * @example
+ * const reqLogger = createRequestLogger(req.id);
+ * reqLogger.info('Processando validação');
+ * // Output: { requestId: 'abc-123', message: 'Processando validação' }
+ */
+export function createRequestLogger(requestId: string) {
+  return logger.child({ requestId });
+}

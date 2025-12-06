@@ -14,16 +14,16 @@
 
 ### Status Geral
 - **Total:** 27 melhorias
-- **Concluídas:** 16/27 (59.26%)
+- **Concluídas:** 17/27 (62.96%)
 - **Em progresso:** 0/27 (0%)
-- **Pendentes:** 11/27 (40.74%)
+- **Pendentes:** 10/27 (37.04%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
 - [x] **Performance:** 3/3 (100%) ✅
 - [x] **Qualidade de Código:** 3/3 (100%) ✅
 - [ ] **Funcionalidades:** 0/3 - [Seção 4](#4-funcionalidades)
-- [ ] **Observabilidade:** 1/4 (25%) - [Seção 5](#5-observabilidade)
+- [ ] **Observabilidade:** 2/4 (50%) - [Seção 5](#5-observabilidade)
 - [ ] **DevOps:** 1/2 (50%) - [Seção 6](#6-devops)
 - [ ] **Testes:** 2/3 (66.67%) - [Seção 7](#7-testes)
 - [ ] **Documentação:** 0/3 - [Seção 8](#8-documentação)
@@ -1921,7 +1921,7 @@ curl http://localhost:3001/metrics
 ---
 
 ## 5.3. Request ID Tracking
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-06
 - **Prioridade:** 🟢 BAIXA
 - **Tempo estimado:** 30 minutos
 - **Arquivos afetados:** `src/middleware/request-id.ts` (novo), `src/server.ts`, `src/utils/logger.ts`
@@ -2004,11 +2004,13 @@ curl -H "X-Request-ID: test-123" http://localhost:3001/api/gcode/validate \
 ```
 
 ### Critério de Conclusão
-- [ ] Middleware criado
-- [ ] Request ID aplicado em todas rotas
-- [ ] Header `X-Request-ID` presente nas respostas
-- [ ] Logs incluem `requestId`
-- [ ] IDs customizados são respeitados
+- [x] Middleware criado
+- [x] Request ID aplicado em todas rotas
+- [x] Header `X-Request-ID` presente nas respostas
+- [x] Logs incluem `requestId` (via `createRequestLogger`)
+- [x] IDs customizados são respeitados
+- [x] Testes unitários (6 testes) ✅
+- [x] Testes de integração (7 testes) ✅
 
 ---
 

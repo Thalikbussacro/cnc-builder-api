@@ -8,6 +8,7 @@ import healthRoutes from './routes/health.routes';
 import { apiLimiter } from './middleware/rate-limit';
 import { sanitizeMiddleware } from './middleware/sanitize';
 import { errorHandler } from './middleware/error-handler';
+import { requestIdMiddleware } from './middleware/request-id';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -32,6 +33,9 @@ app.use(compression({
   level: 6, // Nível de compressão (1-9, 6 é padrão equilibrado)
   threshold: 1024, // Só comprime se > 1KB
 }));
+
+// Request ID (rastreamento de requisições)
+app.use(requestIdMiddleware);
 
 // CORS Configuration
 app.use(cors({

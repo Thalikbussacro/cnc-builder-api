@@ -3,6 +3,13 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/*.test.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__mocks__/', // Ignora arquivos de mock
+  ],
+  moduleNameMapper: {
+    '^uuid$': '<rootDir>/src/__tests__/__mocks__/uuid.ts', // Mock do uuid para testes
+  },
   collectCoverageFrom: [
     'src/services/**/*.ts',
     '!src/**/*.d.ts',
