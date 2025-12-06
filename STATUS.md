@@ -161,7 +161,6 @@ b04b004 - feat: setup project structure (Phase 1)
 - [ ] Add compression middleware
 - [ ] Add rate limiting
 - [ ] Configure CORS for production
-- [ ] Deploy API (Render.com recommended)
 - [ ] Deploy frontend (Vercel recommended)
 - [ ] Configure environment variables
 
