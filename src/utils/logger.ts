@@ -1,9 +1,8 @@
 import winston from 'winston';
-
-const logLevel = process.env.LOG_LEVEL || 'info';
+import { appConfig } from '../config';
 
 export const logger = winston.createLogger({
-  level: logLevel,
+  level: appConfig.logLevel,
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
@@ -23,7 +22,7 @@ export const logger = winston.createLogger({
     }),
 
     // Arquivo de erros (apenas produção)
-    ...(process.env.NODE_ENV === 'production'
+    ...(appConfig.isProduction
       ? [
           new winston.transports.File({
             filename: 'logs/error.log',

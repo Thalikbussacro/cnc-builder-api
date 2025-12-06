@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import { appConfig } from './config';
 import gcodeRoutes from './routes/gcode.routes';
 import healthRoutes from './routes/health.routes';
 import { apiLimiter } from './middleware/rate-limit';
@@ -10,7 +11,7 @@ import { errorHandler } from './middleware/error-handler';
 import { logger } from './utils/logger';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = appConfig.port;
 
 // Security headers
 app.use(helmet({
@@ -33,17 +34,12 @@ app.use(compression({
 }));
 
 // CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:3000',
-  'https://cnc-builder-web.vercel.app',
-];
-
 app.use(cors({
   origin: (origin, callback) => {
     // Permite requests sem origin (Postman, curl, etc)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (appConfig.allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       logger.warn('CORS: Origem bloqueada', { origin });
@@ -71,5 +67,5 @@ app.use('/api', gcodeRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  logger.info('🚀 API rodando', { port: PORT, env: process.env.NODE_ENV || 'development' });
+  logger.info('🚀 API rodando', { port: PORT, env: appConfig.nodeEnv });
 });
