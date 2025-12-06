@@ -25,7 +25,10 @@
       "Bash(if exist nul del nul)",
       "Bash(git push)",
       "Bash(del CONTRIBUTING.md API_DOCS.md MELHORIAS.md STATUS.md POSTMAN_GUIDE.md PROMPT_DESENVOLVIMENTO.md)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git show:*)",
+      "Bash(git push:*)",
+      "Bash(del commits-export.txt commits-current.txt commit-rewrite-map.py run-git-filter.py)"
     ],
     "deny": [],
     "ask": []
