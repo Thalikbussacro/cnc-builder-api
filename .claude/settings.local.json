@@ -19,7 +19,10 @@
       "Bash(powershell -Command \"Import-Module BurntToast; New-BurntToastNotification -Text ''Documentação Atualizada'', ''MELHORIAS.md atualizado com 11/28 tarefas concluídas (39.29%)''\")",
       "Bash(powershell -Command:*)",
       "Bash(npm test:*)",
-      "Bash(npm run test:coverage:*)"
+      "Bash(npm run test:coverage:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout /t 2 /nobreak)",
+      "Bash(if exist nul del nul)"
     ],
     "deny": [],
     "ask": []

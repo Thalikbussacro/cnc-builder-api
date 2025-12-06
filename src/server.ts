@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import gcodeRoutes from './routes/gcode.routes';
+import healthRoutes from './routes/health.routes';
 import { apiLimiter } from './middleware/rate-limit';
 import { sanitizeMiddleware } from './middleware/sanitize';
 import { errorHandler } from './middleware/error-handler';
@@ -60,13 +61,11 @@ app.use(sanitizeMiddleware); // Sanitiza inputs
 // Rate limiting
 app.use('/api', apiLimiter);
 
+// Health routes (ANTES das rotas /api)
+app.use(healthRoutes);
+
 // Rotas
 app.use('/api', gcodeRoutes);
-
-// Health check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Error handler global (sempre por último)
 app.use(errorHandler);
