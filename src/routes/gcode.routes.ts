@@ -32,29 +32,115 @@ function withTimeout(timeoutMs: number) {
 }
 
 /**
- * POST /api/gcode/generate
+ * @swagger
+ * /api/gcode/generate:
+ *   post:
+ *     summary: Gera código G-code para corte CNC
+ *     description: |
+ *       Gera código G-code otimizado a partir de especificações de peças.
  *
- * Body (todos campos opcionais exceto 'pecas'):
- * {
- *   pecas: Peca[],                          // OBRIGATÓRIO
- *   configChapa?: Partial<ConfiguracoesChapa>,
- *   configCorte?: Partial<ConfiguracoesCorte>,
- *   configFerramenta?: Partial<ConfiguracoesFerramenta>,
- *   metodoNesting?: 'greedy' | 'shelf' | 'guillotine',  // Default: guillotine
- *   incluirComentarios?: boolean            // Default: true
- * }
+ *       **Processo:**
+ *       1. Valida entrada com Zod
+ *       2. Aplica algoritmo de nesting escolhido
+ *       3. Valida configurações
+ *       4. Gera G-code
+ *       5. Calcula métricas e tempo estimado
  *
- * Response:
- * {
- *   gcode: string,
- *   metadata: {
- *     linhas: number,
- *     tamanhoBytes: number,
- *     tempoEstimado: { ... },
- *     metricas: { areaUtilizada, eficiencia },
- *     configuracoes: { ... }  // Configurações finais aplicadas
- *   }
- * }
+ *       **Rate Limit:** 20 requisições/minuto
+ *
+ *       **Timeout:** 30 segundos
+ *     tags:
+ *       - G-code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pecas
+ *             properties:
+ *               pecas:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 1000
+ *                 items:
+ *                   $ref: '#/components/schemas/Peca'
+ *                 description: Lista de peças a serem cortadas
+ *               configChapa:
+ *                 $ref: '#/components/schemas/ConfigChapa'
+ *               configCorte:
+ *                 $ref: '#/components/schemas/ConfigCorte'
+ *               configMaquina:
+ *                 $ref: '#/components/schemas/ConfigMaquina'
+ *               metodoNesting:
+ *                 type: string
+ *                 enum: [greedy, shelf, guillotine]
+ *                 default: guillotine
+ *                 description: Algoritmo de otimização de posicionamento
+ *               incluirComentarios:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Incluir comentários explicativos no G-code
+ *           example:
+ *             pecas:
+ *               - id: "1"
+ *                 largura: 100
+ *                 altura: 150
+ *                 tipoCorte: "externo"
+ *                 prioridade: 5
+ *               - id: "2"
+ *                 largura: 200
+ *                 altura: 100
+ *                 tipoCorte: "interno"
+ *             metodoNesting: "guillotine"
+ *             incluirComentarios: true
+ *     responses:
+ *       200:
+ *         description: G-code gerado com sucesso
+ *         headers:
+ *           X-Request-ID:
+ *             $ref: '#/components/headers/X-Request-ID'
+ *           X-RateLimit-Limit:
+ *             $ref: '#/components/headers/X-RateLimit-Limit'
+ *           X-RateLimit-Remaining:
+ *             $ref: '#/components/headers/X-RateLimit-Remaining'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GCodeResponse'
+ *       400:
+ *         description: Dados inválidos ou peças não couberam na chapa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       422:
+ *         description: Configurações inválidas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       429:
+ *         description: Rate limit excedido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Muitas requisições. Tente novamente em 1 minuto."
+ *       504:
+ *         description: Timeout - processamento excedeu 30 segundos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Request timeout"
  */
 router.post('/gcode/generate', gcodeGenerationLimiter, withTimeout(30000), (req, res, next) => {
   try {
@@ -162,25 +248,76 @@ router.post('/gcode/generate', gcodeGenerationLimiter, withTimeout(30000), (req,
 });
 
 /**
- * POST /api/gcode/validate
+ * @swagger
+ * /api/gcode/validate:
+ *   post:
+ *     summary: Valida configurações sem gerar G-code
+ *     description: |
+ *       Valida configurações e retorna preview do nesting sem gerar G-code completo.
+ *       Ideal para feedback em tempo real no frontend.
  *
- * Valida configurações sem gerar G-code (útil para feedback em tempo real no frontend)
+ *       **Recursos:**
+ *       - Cache de 5 minutos para validações repetidas
+ *       - Preview com peças posicionadas
+ *       - Detecção de peças que não couberam
+ *       - Cálculo de métricas e tempo estimado
  *
- * Body (mesmos parâmetros do /generate):
- * {
- *   pecas: Peca[],
- *   configChapa?: Partial<ConfiguracoesChapa>,
- *   configCorte?: Partial<ConfiguracoesCorte>,
- *   configFerramenta?: Partial<ConfiguracoesFerramenta>,
- *   metodoNesting?: 'greedy' | 'shelf' | 'guillotine'
- * }
+ *       **Rate Limit:** 20 requisições/minuto
  *
- * Response:
- * {
- *   valid: boolean,
- *   errors: ValidationIssue[],
- *   warnings: ValidationIssue[]
- * }
+ *       **Timeout:** 10 segundos
+ *     tags:
+ *       - G-code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pecas
+ *             properties:
+ *               pecas:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 1000
+ *                 items:
+ *                   $ref: '#/components/schemas/Peca'
+ *               configChapa:
+ *                 $ref: '#/components/schemas/ConfigChapa'
+ *               configCorte:
+ *                 $ref: '#/components/schemas/ConfigCorte'
+ *               configMaquina:
+ *                 $ref: '#/components/schemas/ConfigMaquina'
+ *               metodoNesting:
+ *                 type: string
+ *                 enum: [greedy, shelf, guillotine]
+ *                 default: guillotine
+ *           example:
+ *             pecas:
+ *               - id: "1"
+ *                 largura: 100
+ *                 altura: 100
+ *                 tipoCorte: "externo"
+ *     responses:
+ *       200:
+ *         description: Validação concluída (sempre retorna 200, mesmo com erros de validação)
+ *         headers:
+ *           X-Request-ID:
+ *             $ref: '#/components/headers/X-Request-ID'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationResponse'
+ *       400:
+ *         description: Dados de entrada inválidos (erro de schema Zod)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       429:
+ *         description: Rate limit excedido
+ *       504:
+ *         description: Timeout - processamento excedeu 10 segundos
  */
 router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res, next) => {
   try {
@@ -274,9 +411,45 @@ router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res,
 });
 
 /**
- * GET /api/cache/stats
- *
- * Retorna estatísticas do cache de validação
+ * @swagger
+ * /api/cache/stats:
+ *   get:
+ *     summary: Estatísticas do cache de validação
+ *     description: |
+ *       Retorna métricas sobre o cache de validações:
+ *       - Número de keys armazenadas
+ *       - Total de hits (cache encontrado)
+ *       - Total de misses (cache não encontrado)
+ *       - Taxa de acerto (hit rate)
+ *     tags:
+ *       - Cache
+ *     responses:
+ *       200:
+ *         description: Estatísticas do cache
+ *         headers:
+ *           X-Request-ID:
+ *             $ref: '#/components/headers/X-Request-ID'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 keys:
+ *                   type: number
+ *                   description: Número de entradas no cache
+ *                   example: 42
+ *                 hits:
+ *                   type: number
+ *                   description: Total de cache hits
+ *                   example: 150
+ *                 misses:
+ *                   type: number
+ *                   description: Total de cache misses
+ *                   example: 50
+ *                 hitRate:
+ *                   type: string
+ *                   description: Taxa de acerto em porcentagem
+ *                   example: "75.00%"
  */
 router.get('/cache/stats', (_req, res) => {
   res.json(getCacheStats());

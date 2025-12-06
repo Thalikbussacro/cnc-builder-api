@@ -22,7 +22,8 @@
       "Bash(npm run test:coverage:*)",
       "Bash(npm run build:*)",
       "Bash(timeout /t 2 /nobreak)",
-      "Bash(if exist nul del nul)"
+      "Bash(if exist nul del nul)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
