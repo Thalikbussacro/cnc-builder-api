@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Schema de validação das variáveis de ambiente
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().int().positive()).default('3001'),
+  PORT: z.string().default('3001').transform(Number).pipe(z.number().int().positive()),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
 });
@@ -28,7 +28,7 @@ function loadConfig() {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('❌ Erro de configuração:');
-      console.error(error.errors);
+      console.error(error.issues);
       process.exit(1);
     }
     throw error;
