@@ -14,16 +14,16 @@
 
 ### Status Geral
 - **Total:** 27 melhorias
-- **Concluídas:** 13/27 (48.15%)
+- **Concluídas:** 14/27 (51.85%)
 - **Em progresso:** 0/27 (0%)
-- **Pendentes:** 14/27 (51.85%)
+- **Pendentes:** 13/27 (48.15%)
 
 ### Por Categoria
 - [x] **Segurança:** 6/6 (100%) ✅
 - [x] **Performance:** 3/3 (100%) ✅
 - [x] **Qualidade de Código:** 3/3 (100%) ✅
 - [ ] **Funcionalidades:** 0/3 - [Seção 4](#4-funcionalidades)
-- [ ] **Observabilidade:** 0/4 - [Seção 5](#5-observabilidade)
+- [ ] **Observabilidade:** 1/4 (25%) - [Seção 5](#5-observabilidade)
 - [ ] **DevOps:** 0/2 - [Seção 6](#6-devops)
 - [ ] **Testes:** 1/3 (33.33%) - [Seção 7](#7-testes)
 - [ ] **Documentação:** 0/3 - [Seção 8](#8-documentação)
@@ -1632,7 +1632,7 @@ curl -X POST http://localhost:3001/api/gcode/generate-multi \
 # 5. Observabilidade
 
 ## 5.1. Health Check Completo
-- [ ] **Status:** Pendente
+- [x] **Status:** ✅ Concluído em 2025-12-06
 - **Prioridade:** 🔴 CRÍTICA
 - **Tempo estimado:** 45 minutos
 - **Arquivos afetados:** `src/routes/health.routes.ts` (novo), `src/server.ts`
@@ -1770,11 +1770,11 @@ curl http://localhost:3001/live
 ```
 
 ### Critério de Conclusão
-- [ ] Arquivo `health.routes.ts` criado
-- [ ] Endpoint `/health` retorna status
-- [ ] Endpoint `/health/detailed` retorna métricas completas
-- [ ] Status muda para degraded/unhealthy quando apropriado
-- [ ] Stats de cache incluídos quando disponível
+- [x] Arquivo `health.routes.ts` criado
+- [x] Endpoint `/health` retorna status
+- [x] Endpoint `/health/detailed` retorna métricas completas
+- [x] Status muda para degraded/unhealthy quando apropriado
+- [x] Stats de cache incluídos quando disponível
 
 ---
 
