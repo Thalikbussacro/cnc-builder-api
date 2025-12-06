@@ -10,7 +10,6 @@ export const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'cnc-builder-api' },
   transports: [
-    // Console (sempre ativo)
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
@@ -20,8 +19,6 @@ export const logger = winston.createLogger({
         })
       ),
     }),
-
-    // Arquivo de erros (apenas produção)
     ...(appConfig.isProduction
       ? [
           new winston.transports.File({
@@ -36,22 +33,12 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Stream para integração com Express/Morgan
 export const stream = {
   write: (message: string) => {
     logger.info(message.trim());
   },
 };
 
-/**
- * Cria um logger "filho" com request ID incluído nos metadados
- * Útil para rastrear todos os logs relacionados a um request específico
- *
- * @example
- * const reqLogger = createRequestLogger(req.id);
- * reqLogger.info('Processando validação');
- * // Output: { requestId: 'abc-123', message: 'Processando validação' }
- */
 export function createRequestLogger(requestId: string) {
   return logger.child({ requestId });
 }

@@ -16,33 +16,30 @@ import { logger } from './utils/logger';
 const app = express();
 const PORT = appConfig.port;
 
-// Security headers
+// Cabeçalhos de segurança
 app.use(helmet({
-  contentSecurityPolicy: false, // API não precisa CSP
-  crossOriginEmbedderPolicy: false, // Permitir embeds
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
 }));
 
 // Compressão de respostas
 app.use(compression({
   filter: (req, res) => {
-    // Não comprimir se cliente enviou header x-no-compression
     if (req.headers['x-no-compression']) {
       return false;
     }
-    // Comprimir apenas responses maiores que 1KB
     return compression.filter(req, res);
   },
-  level: 6, // Nível de compressão (1-9, 6 é padrão equilibrado)
-  threshold: 1024, // Só comprime se > 1KB
+  level: 6,
+  threshold: 1024,
 }));
 
-// Request ID (rastreamento de requisições)
+// Rastreamento de requisições
 app.use(requestIdMiddleware);
 
-// CORS Configuration
+// Configuração CORS
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite requests sem origin (Postman, curl, etc)
     if (!origin) return callback(null, true);
 
     if (appConfig.allowedOrigins.indexOf(origin) !== -1) {
@@ -55,41 +52,33 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400, // 24 horas de cache para preflight
+  maxAge: 86400,
 }));
-app.use(express.json({ limit: '2mb' })); // Limite de tamanho de payload
-app.use(sanitizeMiddleware); // Sanitiza inputs
+app.use(express.json({ limit: '2mb' }));
+app.use(sanitizeMiddleware);
 
-// Rate limiting
+// Limitador de taxa
 app.use('/api', apiLimiter);
 
-// API Documentation (Swagger UI)
+// Documentação Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }', // Remove topbar
+  customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CNC Builder API Docs',
 }));
 
-// JSON spec endpoint
 app.get('/api-docs.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
-// Health routes (ANTES das rotas /api)
 app.use(healthRoutes);
-
-// Rotas
 app.use('/api', gcodeRoutes);
-
-// Error handler global (sempre por último)
 app.use(errorHandler);
 
-// Exportar app para testes
 export default app;
 
-// Só iniciar servidor se não for teste
 if (appConfig.nodeEnv !== 'test') {
   app.listen(PORT, () => {
-    logger.info('🚀 API rodando', { port: PORT, env: appConfig.nodeEnv });
+    logger.info('API iniciada', { port: PORT, env: appConfig.nodeEnv });
   });
 }

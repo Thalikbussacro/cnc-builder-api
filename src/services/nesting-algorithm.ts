@@ -1,117 +1,57 @@
 import type { Peca, PecaPosicionada, Candidato, ResultadoNesting } from "../types";
 
-// ============================================================================
-// ALGORITMO ORIGINAL - GREEDY FIRST-FIT DECREASING (FFD)
-// ============================================================================
-// Mantido comentado para referência e possível rollback
-// Baseado no código Delphi original (uFrmCNC2.pas linhas 250-327)
-
-/*
-export function cabeNoEspaco(
-  nova: PecaPosicionada,
-  lista: PecaPosicionada[],
-  chapaLargura: number,
-  chapaAltura: number,
-  espacamento: number
-): boolean {
-  // Verifica se a peça ultrapassa os limites da chapa
-  if (nova.x + nova.largura > chapaLargura || nova.y + nova.altura > chapaAltura) {
-    return false;
-  }
-
-  // Verifica se a peça respeita o espaçamento mínimo das bordas
-  // (como se as bordas fossem "outras peças")
-  if (nova.x < espacamento || nova.y < espacamento) {
-    return false;
-  }
-
-  // Verifica espaçamento da borda direita e superior
-  if (nova.x + nova.largura + espacamento > chapaLargura ||
-      nova.y + nova.altura + espacamento > chapaAltura) {
-    return false;
-  }
-
-  for (const p of lista) {
-    const aEsquerda = nova.x + nova.largura + espacamento <= p.x;
-    const aDireita = nova.x >= p.x + p.largura + espacamento;
-    const acima = nova.y + nova.altura + espacamento <= p.y;
-    const abaixo = nova.y >= p.y + p.altura + espacamento;
-
-    if (!aEsquerda && !aDireita && !acima && !abaixo) {
-      return false;
-    }
-  }
-
-  return true;
+function distanciaEuclidiana(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
 
-export function posicionarPecasGreedy(
-  pecas: Peca[],
-  chapaLargura: number,
-  chapaAltura: number,
-  espacamento: number
-): ResultadoNesting {
-  const pecasOrdenadas = [...pecas].sort((a, b) => {
-    return b.largura * b.altura - a.largura * a.altura;
+function otimizarOrdemCorte(pecas: PecaPosicionada[]): PecaPosicionada[] {
+  if (pecas.length <= 1) return pecas;
+
+  const naoVisitadas = [...pecas];
+  const ordenadas: PecaPosicionada[] = [];
+
+  let atual = naoVisitadas.reduce((closest, peca) => {
+    const distAtual = distanciaEuclidiana(0, 0, peca.x, peca.y);
+    const distClosest = distanciaEuclidiana(0, 0, closest.x, closest.y);
+    return distAtual < distClosest ? peca : closest;
   });
 
-  const posicionadas: PecaPosicionada[] = [];
-  const naoCouberam: Peca[] = [];
-  const candidatos: Candidato[] = [];
+  naoVisitadas.splice(naoVisitadas.indexOf(atual), 1);
+  ordenadas.push(atual);
 
-  candidatos.push({ x: 0, y: 0 });
+  while (naoVisitadas.length > 0) {
+    let maisProxima = naoVisitadas[0];
+    let menorDistancia = distanciaEuclidiana(
+      atual.x + atual.largura / 2,
+      atual.y + atual.altura / 2,
+      maisProxima.x + maisProxima.largura / 2,
+      maisProxima.y + maisProxima.altura / 2
+    );
 
-  for (const peca of pecasOrdenadas) {
-    let colocado = false;
+    for (let i = 1; i < naoVisitadas.length; i++) {
+      const candidata = naoVisitadas[i];
+      const dist = distanciaEuclidiana(
+        atual.x + atual.largura / 2,
+        atual.y + atual.altura / 2,
+        candidata.x + candidata.largura / 2,
+        candidata.y + candidata.altura / 2
+      );
 
-    for (const cand of candidatos) {
-      const novaPos: PecaPosicionada = {
-        x: cand.x,
-        y: cand.y,
-        largura: peca.largura,
-        altura: peca.altura,
-        tipoCorte: peca.tipoCorte,
-        id: peca.id,
-        nome: peca.nome,
-        ignorada: peca.ignorada,
-        numeroOriginal: peca.numeroOriginal,
-      };
-
-      if (cabeNoEspaco(novaPos, posicionadas, chapaLargura, chapaAltura, espacamento)) {
-        colocado = true;
-        posicionadas.push(novaPos);
-
-        candidatos.push({
-          x: novaPos.x + novaPos.largura + espacamento,
-          y: novaPos.y,
-        });
-
-        candidatos.push({
-          x: novaPos.x,
-          y: novaPos.y + novaPos.altura + espacamento,
-        });
-
-        break;
+      if (dist < menorDistancia) {
+        menorDistancia = dist;
+        maisProxima = candidata;
       }
     }
 
-    if (!colocado) {
-      naoCouberam.push(peca);
-    }
+    atual = maisProxima;
+    naoVisitadas.splice(naoVisitadas.indexOf(atual), 1);
+    ordenadas.push(atual);
   }
 
-  return { posicionadas, naoCouberam };
+  return ordenadas;
 }
-*/
 
-// ============================================================================
-// FUNÇÕES AUXILIARES COMPARTILHADAS
-// ============================================================================
 
-/**
- * Verifica se uma peça cabe em determinada posição sem colidir com outras peças
- * @param margemBorda - Margem customizada para bordas (se undefined, usa espacamento)
- */
 export function cabeNoEspaco(
   nova: PecaPosicionada,
   lista: PecaPosicionada[],
@@ -155,76 +95,7 @@ export function cabeNoEspaco(
   return true;
 }
 
-/**
- * Calcula distância euclidiana entre dois pontos
- */
-function distanciaEuclidiana(x1: number, y1: number, x2: number, y2: number): number {
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-}
 
-/**
- * Otimiza ordem de peças usando algoritmo de vizinho mais próximo (TSP simplificado)
- * Minimiza deslocamentos em vazio da fresa entre peças
- */
-function otimizarOrdemCorte(pecas: PecaPosicionada[]): PecaPosicionada[] {
-  if (pecas.length <= 1) return pecas;
-
-  const naoVisitadas = [...pecas];
-  const ordenadas: PecaPosicionada[] = [];
-
-  // Começa pela peça mais próxima da origem (0, 0)
-  let atual = naoVisitadas.reduce((closest, peca) => {
-    const distAtual = distanciaEuclidiana(0, 0, peca.x, peca.y);
-    const distClosest = distanciaEuclidiana(0, 0, closest.x, closest.y);
-    return distAtual < distClosest ? peca : closest;
-  });
-
-  naoVisitadas.splice(naoVisitadas.indexOf(atual), 1);
-  ordenadas.push(atual);
-
-  // Para cada peça restante, escolhe a mais próxima da atual
-  while (naoVisitadas.length > 0) {
-    let maisProxima = naoVisitadas[0];
-    let menorDistancia = distanciaEuclidiana(
-      atual.x + atual.largura / 2,
-      atual.y + atual.altura / 2,
-      maisProxima.x + maisProxima.largura / 2,
-      maisProxima.y + maisProxima.altura / 2
-    );
-
-    for (let i = 1; i < naoVisitadas.length; i++) {
-      const candidata = naoVisitadas[i];
-      const dist = distanciaEuclidiana(
-        atual.x + atual.largura / 2,
-        atual.y + atual.altura / 2,
-        candidata.x + candidata.largura / 2,
-        candidata.y + candidata.altura / 2
-      );
-
-      if (dist < menorDistancia) {
-        menorDistancia = dist;
-        maisProxima = candidata;
-      }
-    }
-
-    naoVisitadas.splice(naoVisitadas.indexOf(maisProxima), 1);
-    ordenadas.push(maisProxima);
-    atual = maisProxima;
-  }
-
-  return ordenadas;
-}
-
-// ============================================================================
-// ALGORITMO 1: GREEDY FIRST-FIT DECREASING (FFD) - Melhorado
-// ============================================================================
-
-/**
- * Algoritmo Greedy FFD com otimização de ordem de corte
- * Estratégia: Ordena por área, posiciona em primeiro candidato disponível
- * Vantagens: Rápido, simples, previsível
- * Desvantagens: Não garante solução ótima, pode desperdiçar espaço
- */
 export function posicionarPecasGreedy(
   pecas: Peca[],
   chapaLargura: number,
