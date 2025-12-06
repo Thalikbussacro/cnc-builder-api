@@ -431,6 +431,9 @@ export function posicionarPecasGuillotine(
   margemBorda?: number
 ): ResultadoNesting {
   const margem = margemBorda !== undefined ? margemBorda : espacamento;
+  // Limita número de retângulos livres para evitar explosão de memória
+  const MAX_FREE_RECTS = 100;
+
   // Ordena peças por área decrescente
   const pecasOrdenadas = [...pecas].sort((a, b) => {
     return b.largura * b.altura - a.largura * a.altura;
@@ -440,7 +443,7 @@ export function posicionarPecasGuillotine(
   const naoCouberam: Peca[] = [];
 
   // Lista de retângulos livres disponíveis
-  const retangulosLivres: Retangulo[] = [
+  let retangulosLivres: Retangulo[] = [
     { x: margem, y: margem, largura: chapaLargura - 2 * margem, altura: chapaAltura - 2 * margem }
   ];
 
@@ -528,6 +531,13 @@ export function posicionarPecasGuillotine(
         }
       }
 
+      // Limita número de retângulos para evitar explosão de memória
+      if (retangulosLivres.length > MAX_FREE_RECTS) {
+        // Ordena por área decrescente e mantém apenas os maiores
+        retangulosLivres.sort((a, b) => (b.largura * b.altura) - (a.largura * a.altura));
+        retangulosLivres = retangulosLivres.slice(0, MAX_FREE_RECTS);
+      }
+
       colocado = true;
     }
 
@@ -568,6 +578,15 @@ export function posicionarPecas(
   margemBorda?: number
 ): ResultadoNesting & { metricas: { areaUtilizada: number; eficiencia: number; tempo: number } } {
   const inicio = performance.now();
+
+  // Early exit: Se não há peças, retorna vazio imediatamente
+  if (pecas.length === 0) {
+    return {
+      posicionadas: [],
+      naoCouberam: [],
+      metricas: { areaUtilizada: 0, eficiencia: 0, tempo: 0 },
+    };
+  }
 
   let resultado: ResultadoNesting;
 
