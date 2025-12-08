@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "start.js",
-      "use": "@vercel/node"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
