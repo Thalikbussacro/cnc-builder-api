@@ -28,3 +28,6 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+
+#Claude Code
+.claude/
