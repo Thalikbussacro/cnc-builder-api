@@ -2,11 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import swaggerUi from 'swagger-ui-express';
 import { appConfig } from './config';
-import { swaggerSpec } from './config/swagger';
 import gcodeRoutes from './routes/gcode.routes';
 import healthRoutes from './routes/health.routes';
+import swaggerRoutes from './routes/swagger.routes';
 import { apiLimiter } from './middleware/rate-limit';
 import { sanitizeMiddleware } from './middleware/sanitize';
 import { errorHandler } from './middleware/error-handler';
@@ -67,17 +66,8 @@ app.use(sanitizeMiddleware);
 // Limitador de taxa
 app.use('/api', apiLimiter);
 
-// Documentação Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'CNC Builder API Docs',
-}));
-
-app.get('/api-docs.json', (_req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
-
+// Rotas
+app.use(swaggerRoutes);
 app.use(healthRoutes);
 app.use('/api', gcodeRoutes);
 app.use(errorHandler);
