@@ -15,7 +15,6 @@ REST API para geração de G-code com algoritmos de nesting otimizados.
 - Algoritmos de nesting (Shelf, Guillotine, MaxRects)
 - Validação pré-geração com preview
 - Cache de validações para performance
-- Health checks e métricas do sistema
 
 ## Rate Limiting
 - **Global:** 100 requisições por 15 minutos
@@ -49,11 +48,7 @@ Você pode fornecer seu próprio ID através do header na requisição.
     },
     {
       name: 'Health',
-      description: 'Health checks e métricas do sistema',
-    },
-    {
-      name: 'Cache',
-      description: 'Estatísticas e gerenciamento de cache',
+      description: 'Health check do sistema',
     },
   ],
   components: {

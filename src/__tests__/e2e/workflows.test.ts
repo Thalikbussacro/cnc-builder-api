@@ -48,13 +48,6 @@ describe('E2E: Fluxos Completos', () => {
       expect(validacaoCache.status).toBe(200);
       // Deve ser idêntico à primeira validação (cache hit)
       expect(validacaoCache.body).toEqual(validacao.body);
-
-      // PASSO 4: Verificar estatísticas de cache
-      const stats = await request(app).get('/api/cache/stats');
-
-      expect(stats.status).toBe(200);
-      expect(stats.body.keys).toBeGreaterThan(0);
-      expect(stats.body.hits).toBeGreaterThan(0);
     }, 30000); // Timeout de 30s para o teste completo
   });
 
@@ -232,25 +225,6 @@ describe('E2E: Fluxos Completos', () => {
       expect(greedy.body.metadata.metricas.eficiencia).toBeGreaterThan(0);
       expect(shelf.body.metadata.metricas.eficiencia).toBeGreaterThan(0);
       expect(guillotine.body.metadata.metricas.eficiencia).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Fluxo: Health Checks', () => {
-    it('deve retornar status saudável em sequência de health checks', async () => {
-      // Simular monitoramento contínuo
-      const healthChecks = await Promise.all([
-        request(app).get('/health'),
-        request(app).get('/health/detailed'),
-        request(app).get('/ready'),
-        request(app).get('/live'),
-      ]);
-
-      expect(healthChecks[0].body.status).toBe('ok');
-      expect(['healthy', 'degraded', 'unhealthy']).toContain(
-        healthChecks[1].body.status
-      );
-      expect(healthChecks[2].body.ready).toBe(true);
-      expect(healthChecks[3].body.alive).toBe(true);
     });
   });
 

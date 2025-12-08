@@ -5,7 +5,7 @@ import { gerarGCodeV2, calcularTempoEstimado } from '../services/gcode-generator
 import { mergeWithDefaults, DEFAULT_CONFIG_CHAPA, DEFAULT_CONFIG_CORTE, DEFAULT_CONFIG_FERRAMENTA } from '../utils/defaults';
 import { validateConfigurations } from '../services/validator';
 import { gcodeGenerationLimiter, validationLimiter } from '../middleware/rate-limit';
-import { validationCache, getCacheKey, getCacheStats } from '../services/cache';
+import { validationCache, getCacheKey } from '../services/cache';
 import { BadRequestError, ValidationError } from '../middleware/error-handler';
 import { logger } from '../utils/logger';
 import { GenerateRequestSchema, ValidateRequestSchema } from '../schemas/gcode.schema';
@@ -408,51 +408,6 @@ router.post('/gcode/validate', validationLimiter, withTimeout(10000), (req, res,
     }
     return next(error);
   }
-});
-
-/**
- * @swagger
- * /api/cache/stats:
- *   get:
- *     summary: Estatísticas do cache de validação
- *     description: |
- *       Retorna métricas sobre o cache de validações:
- *       - Número de keys armazenadas
- *       - Total de hits (cache encontrado)
- *       - Total de misses (cache não encontrado)
- *       - Taxa de acerto (hit rate)
- *     tags:
- *       - Cache
- *     responses:
- *       200:
- *         description: Estatísticas do cache
- *         headers:
- *           X-Request-ID:
- *             $ref: '#/components/headers/X-Request-ID'
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 keys:
- *                   type: number
- *                   description: Número de entradas no cache
- *                   example: 42
- *                 hits:
- *                   type: number
- *                   description: Total de cache hits
- *                   example: 150
- *                 misses:
- *                   type: number
- *                   description: Total de cache misses
- *                   example: 50
- *                 hitRate:
- *                   type: string
- *                   description: Taxa de acerto em porcentagem
- *                   example: "75.00%"
- */
-router.get('/cache/stats', (_req, res) => {
-  res.json(getCacheStats());
 });
 
 export default router;

@@ -181,25 +181,4 @@ describe('Integration: G-code Endpoints', () => {
       expect(response1.body).toEqual(response2.body);
     });
   });
-
-  describe('GET /api/cache/stats', () => {
-    it('deve retornar estatísticas do cache', async () => {
-      // Fazer uma validação primeiro para popular o cache
-      await request(app)
-        .post('/api/gcode/validate')
-        .send({
-          pecas: [
-            { largura: 100, altura: 100, tipoCorte: 'externo', id: '1' },
-          ],
-        });
-
-      const response = await request(app)
-        .get('/api/cache/stats')
-        .expect(200);
-
-      expect(response.body).toHaveProperty('keys');
-      expect(response.body).toHaveProperty('hits');
-      expect(response.body).toHaveProperty('misses');
-    });
-  });
 });
