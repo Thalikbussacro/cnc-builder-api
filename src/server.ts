@@ -20,8 +20,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Swagger UI precisa de inline styles
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Swagger UI precisa de inline scripts
+      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"], // Swagger UI precisa de inline styles e CDN
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"], // Swagger UI precisa de inline scripts e CDN
       imgSrc: ["'self'", "data:", "https:"], // Swagger UI usa data URIs e logos externos
     },
   },
