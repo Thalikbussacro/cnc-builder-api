@@ -1,0 +1,9 @@
+Justificativa da Infraestrutura Cloud
+
+A infraestrutura escolhida para o projeto baseia-se integralmente na plataforma Vercel, por conta dos pontos que podem ser vistos abaixo:
+
+Otimização para Next.js: O frontend utiliza Next.js 15 (App Router), e a Vercel, sendo a criadora do framework, oferece a melhor performance de edge caching e otimização de imagem sem necessidade de configuração complexa.
+Serverless: O backend, embora escrito com Express, pode ser implantado na Vercel como Serverless Functions. Isso elimina a necessidade de gerenciar servidores virtuais (VPS) ou containers Docker manualmente, reduzindo drasticamente o overhead operacional (Ops).
+Custo e eficiência: Para um projeto acadêmico e de portfólio, o Free Tier da Vercel é generoso e suficiente, evitando custos.
+Automação de CI/CD: A integração nativa "Git-to-Deploy" da Vercel removeu a necessidade de escrever pipelines complexos no GitHub Actions, garantindo que cada commit na branch principal (e adicionais) gere uma nova versão instantaneamente.
+Arquitetura Stateless: Como a API é stateless (focada em algoritmos de cálculo de nesting e geração de G-Code) e a persistência é local, não houve necessidade de provisionar bancos de dados na nuvem, simplificando a topologia.

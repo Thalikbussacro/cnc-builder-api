@@ -4,6 +4,10 @@ API REST para geração de código G-code com algoritmos inteligentes de nesting
 
 Este projeto fornece endpoints para otimização de layout de peças e geração automática de trajetórias de corte, incluindo validação de configurações, cache de resultados e monitoramento de performance.
 
+## Escolha da Cloud e Diagramas
+
+Podem ser encontrados dentro da pasta docs/ no repositório.
+
 ## Instalação
 
 ### Requisitos
