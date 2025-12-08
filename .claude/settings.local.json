@@ -28,7 +28,8 @@
       "Bash(rm:*)",
       "Bash(git show:*)",
       "Bash(git push:*)",
-      "Bash(del commits-export.txt commits-current.txt commit-rewrite-map.py run-git-filter.py)"
+      "Bash(del commits-export.txt commits-current.txt commit-rewrite-map.py run-git-filter.py)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []
