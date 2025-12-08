@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
 import { appConfig } from './index';
 
 const swaggerDefinition = {
@@ -299,12 +300,23 @@ Você pode fornecer seu próprio ID através do header na requisição.
   },
 };
 
+// Determinar paths corretos baseado no ambiente
+const getApiPaths = (): string[] => {
+  if (appConfig.isProduction) {
+    // Em produção, usar arquivos .js compilados relativos ao dist/config/
+    return [path.join(__dirname, '../routes/*.js')];
+  } else {
+    // Em desenvolvimento, usar arquivos .ts do src/
+    return [
+      path.join(__dirname, '../routes/*.ts'),
+      path.join(__dirname, '../routes/*.js'), // Fallback para arquivos compilados
+    ];
+  }
+};
+
 const options: swaggerJsdoc.Options = {
   definition: swaggerDefinition,
-  apis: [
-    './src/routes/*.ts', // Arquivos com anotações JSDoc
-    './src/routes/*.js', // Incluir versão compilada também
-  ],
+  apis: getApiPaths(),
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

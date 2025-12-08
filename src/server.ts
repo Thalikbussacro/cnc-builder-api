@@ -18,7 +18,14 @@ const PORT = appConfig.port;
 
 // Cabeçalhos de segurança
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Swagger UI precisa de inline styles
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Swagger UI precisa de inline scripts
+      imgSrc: ["'self'", "data:", "https:"], // Swagger UI usa data URIs e logos externos
+    },
+  },
   crossOriginEmbedderPolicy: false,
 }));
 
