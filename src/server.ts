@@ -52,10 +52,27 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (appConfig.allowedOrigins.indexOf(origin) !== -1) {
+    // Check for exact match or wildcard pattern match
+    const isAllowed = appConfig.allowedOrigins.some(allowedOrigin => {
+      // Exact match
+      if (allowedOrigin === origin) return true;
+
+      // Wildcard pattern match (e.g., https://*.vercel.app)
+      if (allowedOrigin.includes('*')) {
+        const pattern = allowedOrigin
+          .replace(/\./g, '\\.')  // Escape dots
+          .replace(/\*/g, '.*');   // Convert * to .*
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(origin);
+      }
+
+      return false;
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      logger.warn('CORS: Origem bloqueada', { origin });
+      logger.warn('CORS: Origem bloqueada', { origin, allowedOrigins: appConfig.allowedOrigins });
       callback(new Error('Origem não permitida pelo CORS'), false);
     }
   },
