@@ -6,6 +6,10 @@ import { appConfig } from './config';
 import gcodeRoutes from './routes/gcode.routes';
 import healthRoutes from './routes/health.routes';
 import swaggerRoutes from './routes/swagger.routes';
+import authRoutes from './routes/auth.routes';
+import projectsRoutes from './routes/projects.routes';
+import presetsRoutes from './routes/presets.routes';
+import preferencesRoutes from './routes/preferences.routes';
 import { apiLimiter } from './middleware/rate-limit';
 import { sanitizeMiddleware } from './middleware/sanitize';
 import { errorHandler } from './middleware/error-handler';
@@ -48,18 +52,65 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (appConfig.allowedOrigins.indexOf(origin) !== -1) {
+    // Check for exact match or wildcard pattern match
+    const isAllowed = appConfig.allowedOrigins.some(allowedOrigin => {
+      // Exact match
+      if (allowedOrigin === origin) return true;
+
+      // Wildcard pattern match (e.g., https://*.vercel.app)
+      if (allowedOrigin.includes('*')) {
+        const pattern = allowedOrigin
+          .replace(/\./g, '\\.')  // Escape dots
+          .replace(/\*/g, '.*');   // Convert * to .*
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(origin);
+      }
+
+      return false;
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      logger.warn('CORS: Origem bloqueada', { origin });
-      callback(new Error('Origem não permitida pelo CORS'), false);
+      logger.warn('CORS: Origem bloqueada', { origin, allowedOrigins: appConfig.allowedOrigins });
+      callback(null, false);
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
 }));
+// Handle OPTIONS requests explicitly for CORS preflight BEFORE other middlewares
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+
+  // Check if origin is allowed
+  const isAllowed = !origin || appConfig.allowedOrigins.some(allowedOrigin => {
+    if (allowedOrigin === origin) return true;
+
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(origin);
+    }
+
+    return false;
+  });
+
+  if (isAllowed && origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.header('Access-Control-Max-Age', '86400');
+  }
+
+  res.status(200).end();
+});
+
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeMiddleware);
 
@@ -69,6 +120,10 @@ app.use('/api', apiLimiter);
 // Rotas
 app.use(swaggerRoutes);
 app.use(healthRoutes);
+app.use('/api', authRoutes);
+app.use('/api', projectsRoutes);
+app.use('/api', presetsRoutes);
+app.use('/api', preferencesRoutes);
 app.use('/api', gcodeRoutes);
 app.use(errorHandler);
 
