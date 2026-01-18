@@ -81,38 +81,41 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
 }));
+// Handle OPTIONS requests explicitly for CORS preflight BEFORE other middlewares
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+
+  // Check if origin is allowed
+  const isAllowed = !origin || appConfig.allowedOrigins.some(allowedOrigin => {
+    if (allowedOrigin === origin) return true;
+
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(origin);
+    }
+
+    return false;
+  });
+
+  if (isAllowed && origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.header('Access-Control-Max-Age', '86400');
+  }
+
+  res.status(200).end();
+});
+
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeMiddleware);
 
 // Limitador de taxa
 app.use('/api', apiLimiter);
-
-// Handle OPTIONS requests explicitly for CORS preflight
-app.options('*', cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    const isAllowed = appConfig.allowedOrigins.some(allowedOrigin => {
-      if (allowedOrigin === origin) return true;
-
-      if (allowedOrigin.includes('*')) {
-        const pattern = allowedOrigin
-          .replace(/\./g, '\\.')
-          .replace(/\*/g, '.*');
-        const regex = new RegExp(`^${pattern}$`);
-        return regex.test(origin);
-      }
-
-      return false;
-    });
-
-    callback(null, isAllowed);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400,
-}));
 
 // Rotas
 app.use(swaggerRoutes);
