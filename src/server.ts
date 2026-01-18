@@ -6,6 +6,10 @@ import { appConfig } from './config';
 import gcodeRoutes from './routes/gcode.routes';
 import healthRoutes from './routes/health.routes';
 import swaggerRoutes from './routes/swagger.routes';
+import authRoutes from './routes/auth.routes';
+import projectsRoutes from './routes/projects.routes';
+import presetsRoutes from './routes/presets.routes';
+import preferencesRoutes from './routes/preferences.routes';
 import { apiLimiter } from './middleware/rate-limit';
 import { sanitizeMiddleware } from './middleware/sanitize';
 import { errorHandler } from './middleware/error-handler';
@@ -56,7 +60,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
 }));
@@ -69,6 +73,10 @@ app.use('/api', apiLimiter);
 // Rotas
 app.use(swaggerRoutes);
 app.use(healthRoutes);
+app.use('/api', authRoutes);
+app.use('/api', projectsRoutes);
+app.use('/api', presetsRoutes);
+app.use('/api', preferencesRoutes);
 app.use('/api', gcodeRoutes);
 app.use(errorHandler);
 
