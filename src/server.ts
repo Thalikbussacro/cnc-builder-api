@@ -101,7 +101,7 @@ app.use(cors({
   maxAge: 86400,
 }));
 // Handle OPTIONS requests explicitly for CORS preflight BEFORE other middlewares
-app.options('*', (req, res) => {
+app.options('/*', (req, res) => {
   const origin = req.headers.origin;
   logger.info('OPTIONS: Preflight recebido', {
     origin,
