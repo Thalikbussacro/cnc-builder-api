@@ -127,9 +127,11 @@ app.use('/api', preferencesRoutes);
 app.use('/api', gcodeRoutes);
 app.use(errorHandler);
 
+// Export app for Vercel serverless
 export default app;
 
-if (appConfig.nodeEnv !== 'test') {
+// Only listen if not in test or serverless environment
+if (appConfig.nodeEnv !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     logger.info('API iniciada', { port: PORT, env: appConfig.nodeEnv });
   });
