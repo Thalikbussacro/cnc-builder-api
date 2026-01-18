@@ -99,44 +99,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }));
-// Handle OPTIONS requests explicitly for CORS preflight BEFORE other middlewares
-app.options('/*', (req, res) => {
-  const origin = req.headers.origin;
-  logger.info('OPTIONS: Preflight recebido', {
-    origin,
-    path: req.path,
-    method: req.method,
-  });
-
-  // Check if origin is allowed
-  const isAllowed = !origin || appConfig.allowedOrigins.some(allowedOrigin => {
-    if (allowedOrigin === origin) return true;
-
-    if (allowedOrigin.includes('*')) {
-      const pattern = allowedOrigin
-        .replace(/\./g, '\\.')
-        .replace(/\*/g, '.*');
-      const regex = new RegExp(`^${pattern}$`);
-      return regex.test(origin);
-    }
-
-    return false;
-  });
-
-  if (isAllowed && origin) {
-    logger.info('OPTIONS: Headers CORS adicionados', { origin });
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    res.header('Access-Control-Max-Age', '86400');
-  } else {
-    logger.warn('OPTIONS: Origem não permitida', { origin });
-  }
-
-  res.status(200).end();
-});
 
 app.use(express.json({ limit: '2mb' }));
 app.use(sanitizeMiddleware);
