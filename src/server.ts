@@ -87,6 +87,33 @@ app.use(sanitizeMiddleware);
 // Limitador de taxa
 app.use('/api', apiLimiter);
 
+// Handle OPTIONS requests explicitly for CORS preflight
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    const isAllowed = appConfig.allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin === origin) return true;
+
+      if (allowedOrigin.includes('*')) {
+        const pattern = allowedOrigin
+          .replace(/\./g, '\\.')
+          .replace(/\*/g, '.*');
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(origin);
+      }
+
+      return false;
+    });
+
+    callback(null, isAllowed);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400,
+}));
+
 // Rotas
 app.use(swaggerRoutes);
 app.use(healthRoutes);
