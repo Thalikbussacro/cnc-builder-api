@@ -740,9 +740,6 @@ export function gerarGCodeV2(
           ? calcularFeedrateRampa(feedrate, anguloRampaZigZag) // Usa o ângulo configurado para zig-zag
           : calcularFeedrateRampa(feedrate, anguloRampa);
 
-        // Determina comprimento do lado onde aplicar rampa
-        const ladoComprimento = direcao.usarLadoX ? (x1 - x0) : (y1 - y0);
-
         // Verifica tipo de rampa e gera apropriadamente
         if (tipoRampa === 'zigzag') {
           // RAMPA ZIG-ZAG (vai-e-vem no mesmo eixo)
