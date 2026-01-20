@@ -15,8 +15,12 @@ export const DEFAULT_CONFIG_CORTE: ConfiguracoesCorte = {
   rapidsSpeed: 4000,
   spindleSpeed: 18000,
   usarRampa: false,
+  tipoRampa: 'linear',
   anguloRampa: 3,
   aplicarRampaEm: 'primeira-passada',
+  zigZagAmplitude: 2,
+  zigZagPitch: 5,
+  maxRampStepZ: 0.5,
   usarMesmoEspacamentoBorda: true,
   margemBorda: 50,
 };

@@ -108,6 +108,260 @@ type EstadoMaquina = {
 };
 
 /**
+ * Resultado da geração de rampa zig-zag
+ */
+type ResultadoRampaZigZag = {
+  gcode: string;
+  distanciaUsada: number;
+  sucesso: boolean;
+  posFinalX: number;
+  posFinalY: number;
+  posFinalZ: number;
+};
+
+/**
+ * Gera rampa zig-zag para entrada no corte
+ * @param ladoComprimento - Comprimento do lado onde aplicar zig-zag (mm)
+ * @param profundidadeIncremental - Profundidade a descer nesta passada (mm)
+ * @param zAlvo - Profundidade alvo absoluta da passada (mm, negativo, ex: -5)
+ * @param zigZagAmplitude - Amplitude lateral do zig-zag (mm)
+ * @param zigZagPitch - Distância de avanço em cada zigue (mm)
+ * @param maxRampStepZ - Máximo de descida por segmento (mm)
+ * @param feedrateRampa - Feedrate para a rampa (mm/min)
+ * @param estado - Estado atual da máquina
+ * @param incluirComentarios - Se deve incluir comentários no G-code
+ * @param usarLadoX - Se true, zig-zag no eixo X (lado inferior), senão no eixo Y (lado esquerdo)
+ * @param xInicio - Coordenada X inicial
+ * @param yInicio - Coordenada Y inicial
+ * @returns Resultado da geração com G-code e estado final
+ */
+function gerarRampaZigZag(
+  ladoComprimento: number,
+  profundidadeIncremental: number,
+  zigZagAmplitude: number,
+  zigZagPitch: number,
+  maxRampStepZ: number,
+  feedrateRampa: number,
+  estado: EstadoMaquina,
+  incluirComentarios: boolean,
+  usarLadoX: boolean,
+  xInicio: number,
+  yInicio: number
+): ResultadoRampaZigZag {
+  // Validação de limites críticos
+  const amplitudeMaxima = ladoComprimento * 0.3; // Máximo 30% do lado
+  const pitchMaximo = ladoComprimento * 0.5; // Máximo 50% do lado
+  
+  // Ajusta parâmetros se necessário
+  let amplitudeAjustada = Math.min(zigZagAmplitude, amplitudeMaxima);
+  let pitchAjustado = Math.min(zigZagPitch, pitchMaximo);
+  
+  // Se amplitude muito pequena, usar mínimo razoável
+  if (amplitudeAjustada < 0.5) {
+    amplitudeAjustada = Math.min(0.5, ladoComprimento * 0.1);
+  }
+  
+  // Se pitch muito pequeno, usar mínimo razoável
+  if (pitchAjustado < 1) {
+    pitchAjustado = Math.min(1, ladoComprimento * 0.1);
+  }
+  
+  // Calcula comprimento necessário para rampa (estimativa conservadora)
+  // Usa um ângulo implícito de ~3° para estimar comprimento mínimo
+  const anguloImplicito = 3;
+  const anguloRadianos = (anguloImplicito * Math.PI) / 180;
+  const rampLengthEstimado = profundidadeIncremental / Math.tan(anguloRadianos);
+  
+  // Se não há espaço suficiente, retorna falha
+  const espacoMinimo = Math.max(rampLengthEstimado, pitchAjustado * 2);
+  if (ladoComprimento < espacoMinimo) {
+    return {
+      gcode: '',
+      distanciaUsada: 0,
+      sucesso: false,
+      posFinalX: estado.posX,
+      posFinalY: estado.posY,
+      posFinalZ: estado.posZ,
+    };
+  }
+  
+  // Calcula número mínimo de segmentos necessário baseado em maxRampStepZ
+  const numSegmentosMinimoPorZ = Math.ceil(profundidadeIncremental / maxRampStepZ);
+  
+  // Ajusta pitch para garantir que cabe no lado
+  const numSegmentosMinimoPorEspaco = Math.ceil(rampLengthEstimado / pitchAjustado);
+  
+  // Usa o maior dos dois: precisa respeitar tanto espaço quanto maxRampStepZ
+  const numSegmentosMinimo = Math.max(numSegmentosMinimoPorZ, numSegmentosMinimoPorEspaco, 2);
+  
+  // Calcula pitch final baseado no número mínimo de segmentos necessário
+  const pitchFinal = Math.min(pitchAjustado, ladoComprimento / numSegmentosMinimo);
+  
+  // Calcula número de segmentos baseado no comprimento disponível
+  let numSegmentos = Math.floor(ladoComprimento / pitchFinal);
+  
+  // Garante que temos pelo menos o número mínimo de segmentos necessário
+  numSegmentos = Math.max(numSegmentos, numSegmentosMinimo);
+  
+  // Recalcula pitch se necessário para garantir que cabe no lado
+  const pitchFinalAjustado = ladoComprimento / numSegmentos;
+  const distanciaTotalUsada = numSegmentos * pitchFinalAjustado;
+  
+  // Garante que não ultrapassa o lado
+  if (distanciaTotalUsada > ladoComprimento || numSegmentos < numSegmentosMinimo) {
+    return {
+      gcode: '',
+      distanciaUsada: 0,
+      sucesso: false,
+      posFinalX: estado.posX,
+      posFinalY: estado.posY,
+      posFinalZ: estado.posZ,
+    };
+  }
+  
+  // Verificação final: garante que deltaZ respeita maxRampStepZ
+  // (Isso pode acontecer se numSegmentosMinimoPorEspaco for maior que numSegmentosMinimoPorZ)
+  const deltaZPorSegmento = profundidadeIncremental / numSegmentos;
+  
+  if (deltaZPorSegmento > maxRampStepZ) {
+    // Aumenta número de segmentos para respeitar maxRampStepZ
+    const numSegmentosRequeridoPorZ = Math.ceil(profundidadeIncremental / maxRampStepZ);
+    
+    if (numSegmentosRequeridoPorZ > numSegmentos) {
+      numSegmentos = numSegmentosRequeridoPorZ;
+      const novoPitch = ladoComprimento / numSegmentos;
+      
+      // Verifica se ainda cabe no lado (pitch não pode ser muito pequeno)
+      if (novoPitch < pitchAjustado * 0.5) {
+        // Pitch muito pequeno, não é viável
+        return {
+          gcode: '',
+          distanciaUsada: 0,
+          sucesso: false,
+          posFinalX: estado.posX,
+          posFinalY: estado.posY,
+          posFinalZ: estado.posZ,
+        };
+      }
+      
+      // Garante que não ultrapassa o lado após ajuste
+      if (numSegmentos * novoPitch > ladoComprimento) {
+        return {
+          gcode: '',
+          distanciaUsada: 0,
+          sucesso: false,
+          posFinalX: estado.posX,
+          posFinalY: estado.posY,
+          posFinalZ: estado.posZ,
+        };
+      }
+    }
+  }
+  
+  // Recalcula valores finais com número de segmentos garantido (respeitando maxRampStepZ)
+  const pitchFinalUsado = ladoComprimento / numSegmentos;
+  const deltaZFinal = profundidadeIncremental / numSegmentos;
+  
+  // Garantia final: deltaZFinal deve ser <= maxRampStepZ após todos os ajustes
+  // (Esta verificação é redundante mas serve como segurança)
+  if (deltaZFinal > maxRampStepZ + 0.001) { // Tolerância de 0.001mm para erros de ponto flutuante
+    return {
+      gcode: '',
+      distanciaUsada: 0,
+      sucesso: false,
+      posFinalX: estado.posX,
+      posFinalY: estado.posY,
+      posFinalZ: estado.posZ,
+    };
+  }
+  
+  let gcode = '';
+  let posXAtual = estado.posX;
+  let posYAtual = estado.posY;
+  let posZAtual = estado.posZ;
+  
+  // Calcula Z inicial (posição atual, geralmente 5mm de altura segura)
+  const zInicial = estado.posZ;
+  
+  // CRÍTICO: Calcula zAlvo a partir de zInicial e profundidadeIncremental
+  // Isso garante que a rampa sempre desce exatamente profundidadeIncremental unidades a partir de zInicial
+  // zInicial é geralmente 5mm (altura segura positiva)
+  // profundidadeIncremental é sempre positivo (Math.abs da diferença)
+  // zAlvo deve ser negativo (profundidade absoluta no G-code)
+  // Se zInicial é positivo e queremos descer profundidadeIncremental, então:
+  // zAlvo = zInicial - profundidadeIncremental (mas isso dá positivo se zInicial > profundidadeIncremental)
+  // Na verdade, se começamos em zInicial positivo e queremos descer profundidadeIncremental,
+  // o zAlvo deve ser: zInicial - profundidadeIncremental (que pode ser positivo ou negativo)
+  // Mas como queremos garantir que descemos profundidadeIncremental unidades, usamos:
+  const zAlvoFinal = zInicial - profundidadeIncremental;
+  
+  // Gera segmentos do zig-zag respeitando maxRampStepZ
+  // deltaZFinal já está garantido <= maxRampStepZ devido ao cálculo acima
+  for (let i = 0; i < numSegmentos; i++) {
+    // Calcula Z respeitando maxRampStepZ: interpola de zInicial até zAlvoFinal
+    // Como já garantimos que deltaZFinal <= maxRampStepZ, cada segmento respeita o limite
+    const progresso = (i + 1) / numSegmentos;
+    // Último segmento deve chegar exatamente em zAlvoFinal (evita erros de ponto flutuante)
+    const zAtual = i === numSegmentos - 1 ? zAlvoFinal : zInicial + (zAlvoFinal - zInicial) * progresso;
+    
+    // Oscilação lateral (zig-zag): alterna entre -amplitude/2 e +amplitude/2
+    // Padrão: 0, +amplitude/2, 0, -amplitude/2, 0, +amplitude/2...
+    // Sempre oscila "para dentro" da peça (mais seguro)
+    let oscilacao = 0;
+    if (i % 2 === 1) { // Segmentos ímpares (1, 3, 5...) têm oscilação
+      const direcao = Math.floor(i / 2) % 2 === 0 ? 1 : -1;
+      oscilacao = amplitudeAjustada * 0.5 * direcao;
+    }
+    
+    let xAlvo: number;
+    let yAlvo: number;
+    
+    if (usarLadoX) {
+      // Zig-zag no eixo X (lado inferior)
+      xAlvo = xInicio + (i + 1) * pitchFinalUsado;
+      yAlvo = yInicio + oscilacao; // Oscila em Y
+    } else {
+      // Zig-zag no eixo Y (lado esquerdo)
+      xAlvo = xInicio + oscilacao; // Oscila em X
+      yAlvo = yInicio + (i + 1) * pitchFinalUsado;
+    }
+    
+    // Garante que não ultrapassa o limite do lado
+    if (usarLadoX) {
+      xAlvo = Math.min(xAlvo, xInicio + ladoComprimento);
+    } else {
+      yAlvo = Math.min(yAlvo, yInicio + ladoComprimento);
+    }
+    
+    // Gera comando G1 com interpolação XYZ
+    const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
+    const comentario = incluirComentarios 
+      ? ` ; Zig-zag segmento ${i + 1}/${numSegmentos}` 
+      : '';
+    
+    gcode += `G1 X${formatarNumero(xAlvo)} Y${formatarNumero(yAlvo)} Z${formatarNumero(zAtual)}${feedCmd}${comentario}\n`;
+    
+    posXAtual = xAlvo;
+    posYAtual = yAlvo;
+    posZAtual = zAtual;
+  }
+  
+  // Atualiza feedrate no estado
+  if (estado.feedrate !== feedrateRampa) {
+    estado.feedrate = feedrateRampa;
+  }
+  
+  return {
+    gcode,
+    distanciaUsada: numSegmentos * pitchFinalUsado,
+    sucesso: true,
+    posFinalX: posXAtual,
+    posFinalY: posYAtual,
+    posFinalZ: posZAtual,
+  };
+}
+
+/**
  * GERADOR G-CODE V2 - OTIMIZADO
  *
  * Otimizações implementadas:
@@ -127,7 +381,21 @@ export function gerarGCodeV2(
   incluirComentarios: boolean = true
 ): string {
   const { largura: chapaL, altura: chapaA } = config;
-  const { profundidade, profundidadePorPassada, feedrate, plungeRate, rapidsSpeed, spindleSpeed, usarRampa, anguloRampa, aplicarRampaEm } = corte;
+  const { 
+    profundidade, 
+    profundidadePorPassada, 
+    feedrate, 
+    plungeRate, 
+    rapidsSpeed, 
+    spindleSpeed, 
+    usarRampa, 
+    tipoRampa = 'linear',
+    anguloRampa, 
+    aplicarRampaEm,
+    zigZagAmplitude = 2,
+    zigZagPitch = 5,
+    maxRampStepZ = 0.5
+  } = corte;
 
   // Validações de segurança para prevenir loops infinitos e valores inválidos
   if (!profundidade || profundidade <= 0) {
@@ -590,30 +858,114 @@ export function gerarGCodeV2(
 
       if (usarRampaNestaPeca) {
         // RAMPA INTERNA: Rampa acontece DURANTE o primeiro lado
-        const feedrateRampa = calcularFeedrateRampa(feedrate, anguloRampa);
+        const feedrateRampa = tipoRampa === 'zigzag' 
+          ? feedrate * 0.7 // Feedrate reduzido para zig-zag (70% do normal)
+          : calcularFeedrateRampa(feedrate, anguloRampa);
 
-        if (direcao.usarLadoX) {
-          // Rampa no lado INFERIOR (X): desce enquanto move em +X
-          const xRampa = x0 + distanciaRampa;
-          const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
+        // Determina comprimento do lado onde aplicar rampa
+        const ladoComprimento = direcao.usarLadoX ? (x1 - x0) : (y1 - y0);
 
-          gcode += incluirComentarios
-            ? `G1 X${formatarNumero(xRampa)} Y${formatarNumero(y0)} Z${formatarNumero(z)}${feedCmd} ; Rampa interna (lado inferior)\n`
-            : `G1 X${formatarNumero(xRampa)} Y${formatarNumero(y0)} Z${formatarNumero(z)}${feedCmd}\n`;
-          estado.posX = xRampa;
-          estado.posZ = z;
-          if (feedCmd) estado.feedrate = feedrateRampa;
+        // Verifica tipo de rampa e gera apropriadamente
+        if (tipoRampa === 'zigzag') {
+          // RAMPA ZIG-ZAG
+          const resultadoZigZag = gerarRampaZigZag(
+            ladoComprimento,
+            profundidadeIncrementalPassada,
+            zigZagAmplitude,
+            zigZagPitch,
+            maxRampStepZ,
+            feedrateRampa,
+            estado,
+            incluirComentarios,
+            direcao.usarLadoX,
+            x0,
+            y0
+          );
 
-          // Completa o resto do lado inferior (se houver)
-          if (xRampa < x1) {
-            const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
+          if (resultadoZigZag.sucesso) {
+            gcode += resultadoZigZag.gcode;
+            estado.posX = resultadoZigZag.posFinalX;
+            estado.posY = resultadoZigZag.posFinalY;
+            estado.posZ = resultadoZigZag.posFinalZ;
+
+            // Completa o resto do lado (se houver)
+            if (direcao.usarLadoX) {
+              if (resultadoZigZag.posFinalX < x1) {
+                const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
+                gcode += incluirComentarios
+                  ? `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2} ; Completa lado inferior\n`
+                  : `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2}\n`;
+                estado.posX = x1;
+                if (feedCmd2) estado.feedrate = feedrate;
+              }
+            } else {
+              if (resultadoZigZag.posFinalY < y1) {
+                const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
+                gcode += incluirComentarios
+                  ? `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2} ; Completa lado esquerdo\n`
+                  : `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2}\n`;
+                estado.posY = y1;
+                if (feedCmd2) estado.feedrate = feedrate;
+              }
+            }
+          } else {
+            // Fallback: mergulho vertical se zig-zag falhar
+            const feedCmd = estado.feedrate !== plungeRate ? ` F${plungeRate}` : '';
             gcode += incluirComentarios
-              ? `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2} ; Completa lado inferior\n`
-              : `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2}\n`;
-            estado.posX = x1;
-            if (feedCmd2) estado.feedrate = feedrate;
+              ? `G1 Z${formatarNumero(z)}${feedCmd} ; Mergulho vertical (zig-zag nao coube)\n`
+              : `G1 Z${formatarNumero(z)}${feedCmd}\n`;
+            estado.posZ = z;
+            if (feedCmd) estado.feedrate = plungeRate;
           }
+        } else {
+          // RAMPA LINEAR (comportamento original)
+          if (direcao.usarLadoX) {
+            // Rampa no lado INFERIOR (X): desce enquanto move em +X
+            const xRampa = x0 + distanciaRampa;
+            const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
 
+            gcode += incluirComentarios
+              ? `G1 X${formatarNumero(xRampa)} Y${formatarNumero(y0)} Z${formatarNumero(z)}${feedCmd} ; Rampa interna (lado inferior)\n`
+              : `G1 X${formatarNumero(xRampa)} Y${formatarNumero(y0)} Z${formatarNumero(z)}${feedCmd}\n`;
+            estado.posX = xRampa;
+            estado.posZ = z;
+            if (feedCmd) estado.feedrate = feedrateRampa;
+
+            // Completa o resto do lado inferior (se houver)
+            if (xRampa < x1) {
+              const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
+              gcode += incluirComentarios
+                ? `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2} ; Completa lado inferior\n`
+                : `G1 X${formatarNumero(x1)} Y${formatarNumero(y0)}${feedCmd2}\n`;
+              estado.posX = x1;
+              if (feedCmd2) estado.feedrate = feedrate;
+            }
+          } else {
+            // Rampa no lado ESQUERDO (Y): desce enquanto move em +Y
+            const yRampa = y0 + distanciaRampa;
+            const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
+
+            gcode += incluirComentarios
+              ? `G1 X${formatarNumero(x0)} Y${formatarNumero(yRampa)} Z${formatarNumero(z)}${feedCmd} ; Rampa interna (lado esquerdo)\n`
+              : `G1 X${formatarNumero(x0)} Y${formatarNumero(yRampa)} Z${formatarNumero(z)}${feedCmd}\n`;
+            estado.posY = yRampa;
+            estado.posZ = z;
+            if (feedCmd) estado.feedrate = feedrateRampa;
+
+            // Completa o resto do lado esquerdo (se houver)
+            if (yRampa < y1) {
+              const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
+              gcode += incluirComentarios
+                ? `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2} ; Completa lado esquerdo\n`
+                : `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2}\n`;
+              estado.posY = y1;
+              if (feedCmd2) estado.feedrate = feedrate;
+            }
+          }
+        }
+
+        // Continua com o contorno do retângulo após a rampa
+        if (direcao.usarLadoX) {
           // Lado direito
           gcode += incluirComentarios
             ? `G1 X${formatarNumero(x1)} Y${formatarNumero(y1)} ; Corta lado direito\n`
@@ -631,29 +983,7 @@ export function gerarGCodeV2(
             ? `G1 X${formatarNumero(x0)} Y${formatarNumero(y0)} ; Corta lado esquerdo (fecha o retângulo)\n`
             : `G1 X${formatarNumero(x0)} Y${formatarNumero(y0)}\n`;
           estado.posY = y0;
-
         } else {
-          // Rampa no lado ESQUERDO (Y): desce enquanto move em +Y
-          const yRampa = y0 + distanciaRampa;
-          const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
-
-          gcode += incluirComentarios
-            ? `G1 X${formatarNumero(x0)} Y${formatarNumero(yRampa)} Z${formatarNumero(z)}${feedCmd} ; Rampa interna (lado esquerdo)\n`
-            : `G1 X${formatarNumero(x0)} Y${formatarNumero(yRampa)} Z${formatarNumero(z)}${feedCmd}\n`;
-          estado.posY = yRampa;
-          estado.posZ = z;
-          if (feedCmd) estado.feedrate = feedrateRampa;
-
-          // Completa o resto do lado esquerdo (se houver)
-          if (yRampa < y1) {
-            const feedCmd2 = estado.feedrate !== feedrate ? ` F${feedrate}` : '';
-            gcode += incluirComentarios
-              ? `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2} ; Completa lado esquerdo\n`
-              : `G1 X${formatarNumero(x0)} Y${formatarNumero(y1)}${feedCmd2}\n`;
-            estado.posY = y1;
-            if (feedCmd2) estado.feedrate = feedrate;
-          }
-
           // Lado superior
           gcode += incluirComentarios
             ? `G1 X${formatarNumero(x1)} Y${formatarNumero(y1)} ; Corta lado superior\n`

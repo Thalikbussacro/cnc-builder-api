@@ -25,8 +25,12 @@ export const ConfigCorteSchema = z.object({
   rapidsSpeed: z.number().positive(),
   spindleSpeed: z.number().positive(),
   usarRampa: z.boolean(),
+  tipoRampa: z.enum(['linear', 'zigzag']).optional(),
   anguloRampa: z.number().min(1).max(10),
   aplicarRampaEm: z.enum(['primeira-passada', 'todas-passadas']),
+  zigZagAmplitude: z.number().min(0.5).max(10).optional(),
+  zigZagPitch: z.number().min(1).max(20).optional(),
+  maxRampStepZ: z.number().min(0.1).max(2).optional(),
   usarMesmoEspacamentoBorda: z.boolean(),
   margemBorda: z.number().min(0),
 });
