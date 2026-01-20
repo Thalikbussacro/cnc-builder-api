@@ -18,9 +18,8 @@ export const DEFAULT_CONFIG_CORTE: ConfiguracoesCorte = {
   tipoRampa: 'linear',
   anguloRampa: 3,
   aplicarRampaEm: 'primeira-passada',
-  zigZagAmplitude: 2,
-  zigZagPitch: 5,
-  maxRampStepZ: 0.5,
+  zigZagDistancia: 5,        // mm - Distância de cada zigue
+  anguloRampaZigZag: 20,     // graus - Ângulo de descida do zig-zag
   usarMesmoEspacamentoBorda: true,
   margemBorda: 50,
 };

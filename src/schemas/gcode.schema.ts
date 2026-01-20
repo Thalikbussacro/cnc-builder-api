@@ -28,9 +28,8 @@ export const ConfigCorteSchema = z.object({
   tipoRampa: z.enum(['linear', 'zigzag']).optional(),
   anguloRampa: z.number().min(1).max(10),
   aplicarRampaEm: z.enum(['primeira-passada', 'todas-passadas']),
-  zigZagAmplitude: z.number().min(0.5).max(10).optional(),
-  zigZagPitch: z.number().min(1).max(20).optional(),
-  maxRampStepZ: z.number().min(0.1).max(2).optional(),
+  zigZagDistancia: z.number().min(1).max(50).optional(), // Distância de cada zigue (mm)
+  anguloRampaZigZag: z.number().min(1).max(45).optional(), // Ângulo de descida do zig-zag (graus)
   usarMesmoEspacamentoBorda: z.boolean(),
   margemBorda: z.number().min(0),
 });

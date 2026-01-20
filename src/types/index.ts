@@ -65,9 +65,8 @@ export type ConfiguracoesCorte = {
   tipoRampa?: TipoRampa;           // Tipo de rampa: 'linear' ou 'zigzag' (default: 'linear')
   anguloRampa: number;              // graus - Ângulo da rampa de entrada (2° a 5°) - usado apenas para rampa linear
   aplicarRampaEm: AplicarRampaEm;   // Quando aplicar rampa (primeira ou todas passadas)
-  zigZagAmplitude?: number;         // mm - Amplitude lateral do zig-zag (default: 2)
-  zigZagPitch?: number;             // mm - Distância de avanço em cada zigue do zig-zag (default: 5)
-  maxRampStepZ?: number;            // mm - Máximo de descida por segmento do zig-zag (default: 0.5)
+  zigZagDistancia?: number;         // mm - Distância de cada zigue do zig-zag (default: 5)
+  anguloRampaZigZag?: number;       // graus - Ângulo de descida do zig-zag (default: 20)
   usarMesmoEspacamentoBorda: boolean; // Se true, usa o mesmo espaçamento entre peças para margem de borda
   margemBorda: number;              // mm - Margem de borda customizada (só usado se usarMesmoEspacamentoBorda = false)
 };

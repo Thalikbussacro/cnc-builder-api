@@ -120,13 +120,15 @@ type ResultadoRampaZigZag = {
 };
 
 /**
- * Gera rampa zig-zag para entrada no corte
- * @param ladoComprimento - Comprimento do lado onde aplicar zig-zag (mm)
- * @param profundidadeIncremental - Profundidade a descer nesta passada (mm)
- * @param zAlvo - Profundidade alvo absoluta da passada (mm, negativo, ex: -5)
- * @param zigZagAmplitude - Amplitude lateral do zig-zag (mm)
- * @param zigZagPitch - Distância de avanço em cada zigue (mm)
- * @param maxRampStepZ - Máximo de descida por segmento (mm)
+ * Gera rampa zig-zag para entrada no corte (vai-e-vem no mesmo eixo)
+ * 
+ * Comportamento: A ferramenta avança e volta no mesmo eixo enquanto desce gradualmente em Z.
+ * Similar ao Aspire: vai de X0 até X0+distancia, volta para X0, repete... descendo em cada movimento.
+ * 
+ * @param zigZagDistancia - Distância de cada zigue (mm) - quanto avança antes de voltar
+ * @param anguloRampaZigZag - Ângulo de descida da rampa (graus)
+ * @param profundidadeIncremental - Profundidade a descer nesta passada (mm) - usado para cálculo de zigues
+ * @param zAlvo - Profundidade absoluta alvo (mm, negativo ex: -15)
  * @param feedrateRampa - Feedrate para a rampa (mm/min)
  * @param estado - Estado atual da máquina
  * @param incluirComentarios - Se deve incluir comentários no G-code
@@ -136,11 +138,10 @@ type ResultadoRampaZigZag = {
  * @returns Resultado da geração com G-code e estado final
  */
 function gerarRampaZigZag(
-  ladoComprimento: number,
+  zigZagDistancia: number,
+  anguloRampaZigZag: number,
   profundidadeIncremental: number,
-  zigZagAmplitude: number,
-  zigZagPitch: number,
-  maxRampStepZ: number,
+  zAlvo: number,
   feedrateRampa: number,
   estado: EstadoMaquina,
   incluirComentarios: boolean,
@@ -148,33 +149,8 @@ function gerarRampaZigZag(
   xInicio: number,
   yInicio: number
 ): ResultadoRampaZigZag {
-  // Validação de limites críticos
-  const amplitudeMaxima = ladoComprimento * 0.3; // Máximo 30% do lado
-  const pitchMaximo = ladoComprimento * 0.5; // Máximo 50% do lado
-  
-  // Ajusta parâmetros se necessário
-  let amplitudeAjustada = Math.min(zigZagAmplitude, amplitudeMaxima);
-  let pitchAjustado = Math.min(zigZagPitch, pitchMaximo);
-  
-  // Se amplitude muito pequena, usar mínimo razoável
-  if (amplitudeAjustada < 0.5) {
-    amplitudeAjustada = Math.min(0.5, ladoComprimento * 0.1);
-  }
-  
-  // Se pitch muito pequeno, usar mínimo razoável
-  if (pitchAjustado < 1) {
-    pitchAjustado = Math.min(1, ladoComprimento * 0.1);
-  }
-  
-  // Calcula comprimento necessário para rampa (estimativa conservadora)
-  // Usa um ângulo implícito de ~3° para estimar comprimento mínimo
-  const anguloImplicito = 3;
-  const anguloRadianos = (anguloImplicito * Math.PI) / 180;
-  const rampLengthEstimado = profundidadeIncremental / Math.tan(anguloRadianos);
-  
-  // Se não há espaço suficiente, retorna falha
-  const espacoMinimo = Math.max(rampLengthEstimado, pitchAjustado * 2);
-  if (ladoComprimento < espacoMinimo) {
+  // Validação de parâmetros
+  if (zigZagDistancia <= 0 || anguloRampaZigZag <= 0 || profundidadeIncremental <= 0) {
     return {
       gcode: '',
       distanciaUsada: 0,
@@ -185,158 +161,63 @@ function gerarRampaZigZag(
     };
   }
   
-  // Calcula número mínimo de segmentos necessário baseado em maxRampStepZ
-  const numSegmentosMinimoPorZ = Math.ceil(profundidadeIncremental / maxRampStepZ);
+  // Limita ângulo entre 1° e 45° para segurança
+  const anguloLimitado = Math.max(1, Math.min(45, anguloRampaZigZag));
+  const anguloRadianos = (anguloLimitado * Math.PI) / 180;
   
-  // Ajusta pitch para garantir que cabe no lado
-  const numSegmentosMinimoPorEspaco = Math.ceil(rampLengthEstimado / pitchAjustado);
+  // Limita distância do zigue entre 1mm e 50mm
+  const distanciaLimitada = Math.max(1, Math.min(50, zigZagDistancia));
   
-  // Usa o maior dos dois: precisa respeitar tanto espaço quanto maxRampStepZ
-  const numSegmentosMinimo = Math.max(numSegmentosMinimoPorZ, numSegmentosMinimoPorEspaco, 2);
+  // Calcula número de zigues necessários
+  // Cada zigue (ida OU volta) desce: deltaZ = distancia * tan(angulo)
+  const deltaZPorZigue = distanciaLimitada * Math.tan(anguloRadianos);
+  const numZigues = Math.ceil(profundidadeIncremental / deltaZPorZigue);
   
-  // Calcula pitch final baseado no número mínimo de segmentos necessário
-  const pitchFinal = Math.min(pitchAjustado, ladoComprimento / numSegmentosMinimo);
-  
-  // Calcula número de segmentos baseado no comprimento disponível
-  let numSegmentos = Math.floor(ladoComprimento / pitchFinal);
-  
-  // Garante que temos pelo menos o número mínimo de segmentos necessário
-  numSegmentos = Math.max(numSegmentos, numSegmentosMinimo);
-  
-  // Recalcula pitch se necessário para garantir que cabe no lado
-  const pitchFinalAjustado = ladoComprimento / numSegmentos;
-  const distanciaTotalUsada = numSegmentos * pitchFinalAjustado;
-  
-  // Garante que não ultrapassa o lado
-  if (distanciaTotalUsada > ladoComprimento || numSegmentos < numSegmentosMinimo) {
-    return {
-      gcode: '',
-      distanciaUsada: 0,
-      sucesso: false,
-      posFinalX: estado.posX,
-      posFinalY: estado.posY,
-      posFinalZ: estado.posZ,
-    };
-  }
-  
-  // Verificação final: garante que deltaZ respeita maxRampStepZ
-  // (Isso pode acontecer se numSegmentosMinimoPorEspaco for maior que numSegmentosMinimoPorZ)
-  const deltaZPorSegmento = profundidadeIncremental / numSegmentos;
-  
-  if (deltaZPorSegmento > maxRampStepZ) {
-    // Aumenta número de segmentos para respeitar maxRampStepZ
-    const numSegmentosRequeridoPorZ = Math.ceil(profundidadeIncremental / maxRampStepZ);
-    
-    if (numSegmentosRequeridoPorZ > numSegmentos) {
-      numSegmentos = numSegmentosRequeridoPorZ;
-      const novoPitch = ladoComprimento / numSegmentos;
-      
-      // Verifica se ainda cabe no lado (pitch não pode ser muito pequeno)
-      if (novoPitch < pitchAjustado * 0.5) {
-        // Pitch muito pequeno, não é viável
-        return {
-          gcode: '',
-          distanciaUsada: 0,
-          sucesso: false,
-          posFinalX: estado.posX,
-          posFinalY: estado.posY,
-          posFinalZ: estado.posZ,
-        };
-      }
-      
-      // Garante que não ultrapassa o lado após ajuste
-      if (numSegmentos * novoPitch > ladoComprimento) {
-        return {
-          gcode: '',
-          distanciaUsada: 0,
-          sucesso: false,
-          posFinalX: estado.posX,
-          posFinalY: estado.posY,
-          posFinalZ: estado.posZ,
-        };
-      }
-    }
-  }
-  
-  // Recalcula valores finais com número de segmentos garantido (respeitando maxRampStepZ)
-  const pitchFinalUsado = ladoComprimento / numSegmentos;
-  const deltaZFinal = profundidadeIncremental / numSegmentos;
-  
-  // Garantia final: deltaZFinal deve ser <= maxRampStepZ após todos os ajustes
-  // (Esta verificação é redundante mas serve como segurança)
-  if (deltaZFinal > maxRampStepZ + 0.001) { // Tolerância de 0.001mm para erros de ponto flutuante
-    return {
-      gcode: '',
-      distanciaUsada: 0,
-      sucesso: false,
-      posFinalX: estado.posX,
-      posFinalY: estado.posY,
-      posFinalZ: estado.posZ,
-    };
-  }
+  // Z inicial e final (zAlvo é a profundidade absoluta, ex: -15)
+  const zInicial = estado.posZ;
+  const zFinal = zAlvo; // Usa a profundidade absoluta alvo passada como parâmetro
   
   let gcode = '';
   let posXAtual = estado.posX;
   let posYAtual = estado.posY;
   let posZAtual = estado.posZ;
+  let feedrateDeclarado = false;
   
-  // Calcula Z inicial (posição atual, geralmente 5mm de altura segura)
-  const zInicial = estado.posZ;
+  if (incluirComentarios) {
+    gcode += `; Rampa zig-zag: ${numZigues} zigues, dist=${formatarNumero(distanciaLimitada)}mm, angulo=${formatarNumero(anguloLimitado)}deg\n`;
+  }
   
-  // CRÍTICO: Calcula zAlvo a partir de zInicial e profundidadeIncremental
-  // Isso garante que a rampa sempre desce exatamente profundidadeIncremental unidades a partir de zInicial
-  // zInicial é geralmente 5mm (altura segura positiva)
-  // profundidadeIncremental é sempre positivo (Math.abs da diferença)
-  // zAlvo deve ser negativo (profundidade absoluta no G-code)
-  // Se zInicial é positivo e queremos descer profundidadeIncremental, então:
-  // zAlvo = zInicial - profundidadeIncremental (mas isso dá positivo se zInicial > profundidadeIncremental)
-  // Na verdade, se começamos em zInicial positivo e queremos descer profundidadeIncremental,
-  // o zAlvo deve ser: zInicial - profundidadeIncremental (que pode ser positivo ou negativo)
-  // Mas como queremos garantir que descemos profundidadeIncremental unidades, usamos:
-  const zAlvoFinal = zInicial - profundidadeIncremental;
+  // Gera movimentos vai-e-vem
+  // Interpola de zInicial (5mm altura segura) até zFinal (ex: -15mm profundidade absoluta)
+  const descidaTotal = zInicial - zFinal; // Total a descer (ex: 5 - (-15) = 20mm)
+  const descidaPorZigue = descidaTotal / numZigues;
   
-  // Gera segmentos do zig-zag respeitando maxRampStepZ
-  // deltaZFinal já está garantido <= maxRampStepZ devido ao cálculo acima
-  for (let i = 0; i < numSegmentos; i++) {
-    // Calcula Z respeitando maxRampStepZ: interpola de zInicial até zAlvoFinal
-    // Como já garantimos que deltaZFinal <= maxRampStepZ, cada segmento respeita o limite
-    const progresso = (i + 1) / numSegmentos;
-    // Último segmento deve chegar exatamente em zAlvoFinal (evita erros de ponto flutuante)
-    const zAtual = i === numSegmentos - 1 ? zAlvoFinal : zInicial + (zAlvoFinal - zInicial) * progresso;
+  for (let i = 0; i < numZigues; i++) {
+    // Calcula Z para este zigue - interpola de zInicial até zFinal
+    const zAtual = i === numZigues - 1 ? zFinal : zInicial - (i + 1) * descidaPorZigue;
     
-    // Oscilação lateral (zig-zag): alterna entre -amplitude/2 e +amplitude/2
-    // Padrão: 0, +amplitude/2, 0, -amplitude/2, 0, +amplitude/2...
-    // Sempre oscila "para dentro" da peça (mais seguro)
-    let oscilacao = 0;
-    if (i % 2 === 1) { // Segmentos ímpares (1, 3, 5...) têm oscilação
-      const direcao = Math.floor(i / 2) % 2 === 0 ? 1 : -1;
-      oscilacao = amplitudeAjustada * 0.5 * direcao;
-    }
+    // Determina se é ida (par) ou volta (ímpar)
+    const ehIda = i % 2 === 0;
     
     let xAlvo: number;
     let yAlvo: number;
     
     if (usarLadoX) {
-      // Zig-zag no eixo X (lado inferior)
-      xAlvo = xInicio + (i + 1) * pitchFinalUsado;
-      yAlvo = yInicio + oscilacao; // Oscila em Y
+      // Zig-zag no eixo X
+      xAlvo = ehIda ? xInicio + distanciaLimitada : xInicio;
+      yAlvo = yInicio;
     } else {
-      // Zig-zag no eixo Y (lado esquerdo)
-      xAlvo = xInicio + oscilacao; // Oscila em X
-      yAlvo = yInicio + (i + 1) * pitchFinalUsado;
+      // Zig-zag no eixo Y
+      xAlvo = xInicio;
+      yAlvo = ehIda ? yInicio + distanciaLimitada : yInicio;
     }
     
-    // Garante que não ultrapassa o limite do lado
-    if (usarLadoX) {
-      xAlvo = Math.min(xAlvo, xInicio + ladoComprimento);
-    } else {
-      yAlvo = Math.min(yAlvo, yInicio + ladoComprimento);
-    }
+    // Gera comando G1
+    const feedCmd = !feedrateDeclarado ? ` F${feedrateRampa}` : '';
+    feedrateDeclarado = true;
     
-    // Gera comando G1 com interpolação XYZ
-    const feedCmd = estado.feedrate !== feedrateRampa ? ` F${feedrateRampa}` : '';
     const comentario = incluirComentarios 
-      ? ` ; Zig-zag segmento ${i + 1}/${numSegmentos}` 
+      ? ` ; ${ehIda ? 'Zigue' : 'Zague'} ${i + 1}/${numZigues}` 
       : '';
     
     gcode += `G1 X${formatarNumero(xAlvo)} Y${formatarNumero(yAlvo)} Z${formatarNumero(zAtual)}${feedCmd}${comentario}\n`;
@@ -347,13 +228,11 @@ function gerarRampaZigZag(
   }
   
   // Atualiza feedrate no estado
-  if (estado.feedrate !== feedrateRampa) {
-    estado.feedrate = feedrateRampa;
-  }
+  estado.feedrate = feedrateRampa;
   
   return {
     gcode,
-    distanciaUsada: numSegmentos * pitchFinalUsado,
+    distanciaUsada: distanciaLimitada, // Retorna a distância do zigue (não a distância total percorrida)
     sucesso: true,
     posFinalX: posXAtual,
     posFinalY: posYAtual,
@@ -392,9 +271,8 @@ export function gerarGCodeV2(
     tipoRampa = 'linear',
     anguloRampa, 
     aplicarRampaEm,
-    zigZagAmplitude = 2,
-    zigZagPitch = 5,
-    maxRampStepZ = 0.5
+    zigZagDistancia = 5,
+    anguloRampaZigZag = 20
   } = corte;
 
   // Validações de segurança para prevenir loops infinitos e valores inválidos
@@ -859,7 +737,7 @@ export function gerarGCodeV2(
       if (usarRampaNestaPeca) {
         // RAMPA INTERNA: Rampa acontece DURANTE o primeiro lado
         const feedrateRampa = tipoRampa === 'zigzag' 
-          ? feedrate * 0.7 // Feedrate reduzido para zig-zag (70% do normal)
+          ? calcularFeedrateRampa(feedrate, anguloRampaZigZag) // Usa o ângulo configurado para zig-zag
           : calcularFeedrateRampa(feedrate, anguloRampa);
 
         // Determina comprimento do lado onde aplicar rampa
@@ -867,13 +745,12 @@ export function gerarGCodeV2(
 
         // Verifica tipo de rampa e gera apropriadamente
         if (tipoRampa === 'zigzag') {
-          // RAMPA ZIG-ZAG
+          // RAMPA ZIG-ZAG (vai-e-vem no mesmo eixo)
           const resultadoZigZag = gerarRampaZigZag(
-            ladoComprimento,
+            zigZagDistancia,
+            anguloRampaZigZag,
             profundidadeIncrementalPassada,
-            zigZagAmplitude,
-            zigZagPitch,
-            maxRampStepZ,
+            z, // Profundidade absoluta alvo (ex: -15)
             feedrateRampa,
             estado,
             incluirComentarios,
